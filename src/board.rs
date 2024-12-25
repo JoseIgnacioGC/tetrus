@@ -1,6 +1,9 @@
 use std::collections::HashSet;
 
-use crossterm::style::{self, Color, Stylize};
+use crossterm::{
+    event::KeyCode,
+    style::{self, Color, Stylize},
+};
 
 use crate::blocks::Block;
 
@@ -34,7 +37,15 @@ impl Board {
             || block_coordinates.iter().any(|(_, y)| *y > self.rows_len)
     }
 
-    pub fn insert_block(&mut self, block: &Block) -> Result<(), &str> {
+    fn _remove_completed_lines(&self) {
+        todo!()
+    }
+
+    fn _try_rotate_block(&self) {
+        todo!()
+    }
+
+    pub fn try_insert_block(&mut self, block: &Block) -> Result<(), &str> {
         let center_coordinates_x =
             self.columns_len / 2 - block.get_columns_len() / 2 - (block.get_columns_len() % 2);
         let block_coordinates = block.get_coordinates();
@@ -52,28 +63,30 @@ impl Board {
         Ok(())
     }
 
-    pub fn move_block_x_axis(&mut self) {
+    pub fn move_block_x_axis(&mut self, key: KeyCode) {
         let moved_block: HashSet<(usize, usize, Color)> = self
             .block_coordinates
             .iter()
             .map_while(|(x, y, color)| {
-                let y = y + 1;
-                (y <= self.rows_len).then_some((*x, y, *color))
+                if (*x == 0 && key == KeyCode::Left)
+                    || (*x == self.columns_len - 1 && key == KeyCode::Right)
+                {
+                    return None;
+                }
+                let x = if key == KeyCode::Left { x - 1 } else { x + 1 };
+                Some((x, *y, *color))
             })
             .collect();
 
-        if moved_block.len() != self.block_coordinates.len() {
-            self.coordinates.extend(&self.block_coordinates);
-            return;
-        }
-        if self.is_block_collinding_with_blocks(&moved_block) {
-            self.coordinates.extend(&self.block_coordinates);
+        if moved_block.len() != self.block_coordinates.len()
+            || self.is_block_collinding_with_blocks(&moved_block)
+        {
             return;
         }
         self.block_coordinates = moved_block;
     }
 
-    pub fn move_block_down_or_set(&mut self) -> Result<(), &str> {
+    pub fn try_move_block_down_or_set(&mut self) -> Result<(), &str> {
         let moved_block: HashSet<(usize, usize, Color)> = self
             .block_coordinates
             .iter()
@@ -115,13 +128,15 @@ impl Board {
             // fix: aout of bounds bug
             .for_each(|&(x, y, color)| shape[y][x] = "□".with(color));
 
+        let pad = "  ".repeat(term_width / 9);
         shape
             .iter()
             .map(|row| {
                 row.iter()
                     .fold(String::new(), |acc, s| format!("{} {}", acc, s))
             })
-            // .map(|s| format!("{: ^term_width$}", s))
+            // .map(|s| format!("{:-^term_width$}", s))
+            .map(|s| format!("{}{}", pad, s))
             .collect::<Vec<String>>()
             .join("\n")
     }

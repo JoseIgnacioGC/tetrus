@@ -6,7 +6,6 @@ use board::Board;
 
 use std::{
     io::{self, Write},
-    thread::sleep,
     time::Duration,
 };
 
@@ -26,42 +25,35 @@ fn main() -> io::Result<()> {
     print!("\x1B[2J\x1B[H");
 
     loop {
-        if poll(Duration::from_secs(0))? {
-            let _ = read()?;
+        if poll(Duration::ZERO)? {
+            read()?;
         };
 
         if !board.is_block_falling {
             let block = Block::get_random();
-            if board.insert_block(&block).is_err() {
+            if board.try_insert_block(&block).is_err() {
                 break;
             };
         } else if poll(Duration::from_millis(500))? {
             if let Event::Key(event) = read()? {
                 match event.code {
-                    KeyCode::Left | KeyCode::Right => board.move_block_x_axis(),
+                    KeyCode::Left | KeyCode::Right => board.move_block_x_axis(event.code),
                     KeyCode::Down => {
-                        let _ = board.move_block_down_or_set().is_err();
+                        board.try_move_block_down_or_set().ok();
                     }
-                    KeyCode::Char('z') => println!("{}", event.code),
-                    KeyCode::Char('x') => println!("{}", event.code),
-                    KeyCode::Char(' ') => loop {
-                        if board.move_block_down_or_set().is_err() {
-                            break;
-                        }
-                    },
-                    KeyCode::Backspace => println!("Space?: {}", event.code),
+                    KeyCode::Char('z') => todo!(),
+                    KeyCode::Char('x') => todo!(),
+                    KeyCode::Char(' ') => while board.try_move_block_down_or_set().is_ok() {},
                     KeyCode::Esc => break,
                     _ => {
-                        // should re-call poll with the remind time
-                        let _ = board.move_block_down_or_set().is_err();
+                        // TODO: should re-call poll with the remind time
+                        let _ = board.try_move_block_down_or_set().is_err();
                     }
                 }
-            } else {
-                todo!()
             }
-            // let _ = board.move_block_down_or_set().is_err();
+            // board.move_block_down_or_set().ok;
         } else {
-            let _ = board.move_block_down_or_set().is_err();
+            board.try_move_block_down_or_set().ok();
         }
 
         let term_width = terminal::size()?.0 as usize;

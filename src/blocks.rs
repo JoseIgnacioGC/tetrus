@@ -30,7 +30,14 @@ impl Block {
             Self::Square => (&[&["x", "x"], &["x", "x"]], Color::Yellow),
             Self::T => (&[&[".", "x", "."], &["x", "x", "x"]], Color::Magenta),
             Self::Line => (&[&["x", "x", "x", "x"]], Color::Cyan),
-            Self::L => (&[&[".", ".", "x"], &["x", "x", "x"]], Color::DarkYellow),
+            Self::L => (
+                &[&[".", ".", "x"], &["x", "x", "x"]],
+                Color::Rgb {
+                    r: 255,
+                    g: 127,
+                    b: 0,
+                },
+            ),
             Self::J => (&[&["x", ".", "."], &["x", "x", "x"]], Color::Blue),
             Self::Z => (&[&["x", "x", "."], &[".", "x", "x"]], Color::Red),
             Self::S => (&[&[".", "x", "x"], &["x", "x", "."]], Color::Green),

@@ -128,7 +128,7 @@ impl Board {
             // fix: aout of bounds bug
             .for_each(|&(x, y, color)| shape[y][x] = "□".with(color));
 
-        let pad = "  ".repeat(term_width / 9);
+        let padding_left = " ".repeat(term_width / 2 - self.columns_len);
         shape
             .iter()
             .map(|row| {
@@ -136,7 +136,7 @@ impl Board {
                     .fold(String::new(), |acc, s| format!("{} {}", acc, s))
             })
             // .map(|s| format!("{:-^term_width$}", s))
-            .map(|s| format!("{}{}", pad, s))
+            .map(|s| format!("{}{}", padding_left, s))
             .collect::<Vec<String>>()
             .join("\n")
     }

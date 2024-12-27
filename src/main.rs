@@ -34,15 +34,18 @@ fn main() -> io::Result<()> {
             if board.try_insert_block(&block).is_err() {
                 break;
             };
-        } else if poll(Duration::from_millis(500))? {
+        }
+
+        if poll(Duration::from_millis(500))? {
             if let Event::Key(event) = read()? {
                 match event.code {
                     KeyCode::Left | KeyCode::Right => board.move_block_x_axis(event.code),
                     KeyCode::Down => {
                         board.try_move_block_down_or_set().ok();
                     }
-                    KeyCode::Char('z') => todo!(),
-                    KeyCode::Char('x') => todo!(),
+                    KeyCode::Char('z') | KeyCode::Char('x') => {
+                        board.try_rotate_block().ok();
+                    }
                     KeyCode::Char(' ') => while board.try_move_block_down_or_set().is_ok() {},
                     KeyCode::Esc => break,
                     _ => {
@@ -65,10 +68,6 @@ fn main() -> io::Result<()> {
             .queue(style::Print("\n"))?
             .queue(style::Print(formated_board))?
             .flush()?;
-
-        poll(Duration::from_millis(0))?;
-
-        // sleep(Duration::from_millis(1000));
     }
     let term_width = terminal::size()?.0 as usize;
     println!("\n\n{: ^term_width$}\n", "You lost!!");

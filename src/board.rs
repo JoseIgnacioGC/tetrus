@@ -1,11 +1,9 @@
-use std::collections::HashSet;
-
+use crate::blocks::Block;
 use crossterm::{
     event::KeyCode,
     style::{self, Color, Stylize},
 };
-
-use crate::blocks::Block;
+use std::collections::HashSet;
 
 type Coords = (usize, usize, Color);
 
@@ -13,17 +11,36 @@ type Coords = (usize, usize, Color);
 pub struct Board {
     columns_len: usize,
     rows_len: usize,
+    title: String,
     coordinates: HashSet<Coords>, // TODO: replace by a HashMap or Vector of HashSet
     block_coordinates: HashSet<Coords>,
-    // board: Vec<Vec<style::StyledContent<String>>> or a slice, // TODO: create a board for efficiency
+    board: Box<[Box<[style::StyledContent<&'static str>]>]>,
     pub is_block_falling: bool,
 }
 
 impl Board {
     pub fn new(columns_len: usize, rows_len: usize) -> Self {
+        let title = [
+            "T".red(),
+            "E".with(Color::Rgb {
+                r: 255,
+                g: 127,
+                b: 0,
+            }),
+            "T".yellow(),
+            "R".green(),
+            "U".cyan(),
+            "S".magenta(),
+        ]
+        .map(|s| s.to_string())
+        .join("");
+
         Self {
             columns_len,
             rows_len,
+            title,
+            board: vec![vec!["".stylize(); columns_len].into_boxed_slice(); rows_len]
+                .into_boxed_slice(),
             ..Default::default()
         }
     }
@@ -37,7 +54,7 @@ impl Board {
             || block_coords.iter().any(|(_, y)| *y > self.rows_len)
     }
 
-    fn remove_completed_lines(&mut self) {
+    fn clear_lines(&mut self) {
         let shorted_coords: Vec<HashSet<Coords>> = self.coordinates.iter().fold(
             vec![HashSet::new(); self.rows_len],
             |mut acc: Vec<HashSet<Coords>>, coordinates| {
@@ -131,7 +148,7 @@ impl Board {
         if moved_block.len() != self.block_coordinates.len() {
             self.coordinates.extend(&self.block_coordinates);
             self.block_coordinates.clear();
-            self.remove_completed_lines();
+            self.clear_lines();
             self.is_block_falling = false;
 
             return Err("block collides with shape");
@@ -139,7 +156,7 @@ impl Board {
         if self.is_block_collinding_with_blocks(&moved_block) {
             self.coordinates.extend(&self.block_coordinates);
             self.block_coordinates.clear();
-            self.remove_completed_lines();
+            self.clear_lines();
             self.is_block_falling = false;
 
             return Err("block collides with a block");
@@ -163,21 +180,7 @@ impl Board {
             .for_each(|&(x, y, color)| shape[y][x] = "□".with(color));
 
         let padding_left = " ".repeat(term_width / 2 - 2);
-        let title = [
-            "T".red(),
-            "E".with(Color::Rgb {
-                r: 255,
-                g: 127,
-                b: 0,
-            }),
-            "T".yellow(),
-            "R".green(),
-            "U".cyan(),
-            "S".magenta(),
-        ]
-        .map(|s| s.to_string())
-        .join("");
-        let title = format!("{}{}", padding_left, title);
+        let title = format!("{}{}", padding_left, self.title);
 
         let padding_left = " ".repeat(term_width / 2 - self.columns_len);
         let board = shape

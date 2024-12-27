@@ -12,7 +12,7 @@ pub struct Board {
     columns_len: usize,
     rows_len: usize,
     title: String,
-    coordinates: HashSet<Coords>, // TODO: replace by a HashMap or Vector of HashSet
+    coordinates: HashSet<Coords>, // TODO: replace by a HashMap or Vector of HashSet maybe
     block_coordinates: HashSet<Coords>,
     board: Box<[Box<[style::StyledContent<&'static str>]>]>,
     pub is_block_falling: bool,
@@ -165,31 +165,34 @@ impl Board {
         Ok(())
     }
 
-    pub fn get_formated_board(&self, term_width: usize) -> String {
-        let mut shape: Vec<Vec<style::StyledContent<&str>>> = [
-            vec![vec![" ".stylize(); self.columns_len]; 1],
-            vec![vec![".".stylize(); self.columns_len]; self.rows_len - 1],
-        ]
-        .concat();
+    pub fn get_formated_board(&mut self, term_width: usize) -> String {
+        for x in 0..self.columns_len {
+            self.board[0][x] = " ".stylize()
+        }
+        for y in 1..self.rows_len {
+            for x in 0..self.columns_len {
+                self.board[y][x] = ".".stylize()
+            }
+        }
+
         self.coordinates
             .iter()
-            .for_each(|&(x, y, color)| shape[y][x] = "■".with(color));
+            .for_each(|&(x, y, color)| self.board[y][x] = "■".with(color));
         self.block_coordinates
             .iter()
-            // fix: aout of bounds bug
-            .for_each(|&(x, y, color)| shape[y][x] = "□".with(color));
+            .for_each(|&(x, y, color)| self.board[y][x] = "□".with(color));
 
-        let padding_left = " ".repeat(term_width / 2 - 2);
+        let padding_left = " ".repeat(term_width / 2 - 3);
         let title = format!("{}{}", padding_left, self.title);
 
         let padding_left = " ".repeat(term_width / 2 - self.columns_len);
-        let board = shape
+        let board = self
+            .board
             .iter()
             .map(|row| {
                 row.iter()
                     .fold(String::new(), |acc, s| format!("{} {}", acc, s))
             })
-            // .map(|s| format!("{:-^term_width$}", s))
             .map(|s| format!("{}{}", padding_left, s))
             .collect::<Vec<String>>()
             .join("\n");

@@ -62,7 +62,7 @@ fn main() -> io::Result<()> {
             block_fall_start_time = Instant::now()
         }
 
-        let term_width = terminal::size()?.0 as usize;
+        let term_width = terminal::size()?.0.into();
         let formated_board = board.get_formated_board(term_width);
 
         stdout
@@ -72,7 +72,7 @@ fn main() -> io::Result<()> {
             .queue(style::Print(formated_board))?
             .flush()?;
     }
-    let term_width = terminal::size()?.0 as usize; // todo: try to convert into usize else use u16 max
+    let term_width = terminal::size()?.0.into();
     println!("\n\n{: ^term_width$}\n", "You lost!!");
     Ok(())
 }

@@ -66,7 +66,7 @@ fn main() -> io::Result<()> {
         let formated_board = board.get_formated_board(term_width);
 
         stdout
-            .queue(cursor::MoveTo(ROWS as u16, 0))?
+            .queue(cursor::MoveTo(ROWS.try_into().unwrap_or(u16::MAX), 0))?
             .queue(terminal::Clear(terminal::ClearType::FromCursorDown))?
             .queue(style::Print("\n"))?
             .queue(style::Print(formated_board))?

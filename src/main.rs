@@ -17,7 +17,7 @@ use crossterm::{
 
 pub const COLUMNS: usize = 10;
 pub const ROWS: usize = 22;
-const BLOCK_FALL_SPEED_MS: u64 = 1000;
+const BLOCK_FALL_SPEED_TIME: Duration = Duration::from_millis(500);
 
 fn main() -> io::Result<()> {
     let mut stdout = io::stdout();
@@ -27,7 +27,7 @@ fn main() -> io::Result<()> {
     print!("\x1B[2J\x1B[H");
 
     loop {
-        // Fix: doble even still persist
+        // FIX: doble even still persist
         if poll(Duration::ZERO)? {
             read()?;
         };
@@ -37,8 +37,9 @@ fn main() -> io::Result<()> {
             if board.try_insert_block(&block).is_err() {
                 break;
             };
-        } else if has_past_less_than_x_ms(BLOCK_FALL_SPEED_MS, block_fall_start_time)
-            && poll(Duration::from_millis(BLOCK_FALL_SPEED_MS))?
+            block_fall_start_time = Instant::now();
+        } else if block_fall_start_time.elapsed() < BLOCK_FALL_SPEED_TIME
+            && poll(BLOCK_FALL_SPEED_TIME)?
         {
             if let Event::Key(event) = read()? {
                 match event.code {
@@ -58,8 +59,8 @@ fn main() -> io::Result<()> {
             }
         } else {
             board.try_move_block_down_or_set().ok();
-            block_fall_start_time = Instant::now()
-        }
+            block_fall_start_time = Instant::now();
+        };
 
         let term_width = terminal::size()?.0.into();
         let formated_board = board.get_formated_board(term_width);
@@ -75,8 +76,4 @@ fn main() -> io::Result<()> {
     let term_width = terminal::size()?.0.into();
     println!("\n\n{: ^term_width$}\n", "You lost!!");
     Ok(())
-}
-
-fn has_past_less_than_x_ms(x_ms_has_past: u64, start_time: Instant) -> bool {
-    start_time.elapsed() < Duration::from_millis(x_ms_has_past)
 }

@@ -6,7 +6,7 @@ use board::Board;
 
 use std::{
     io::{self, Write},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use crossterm::{
@@ -17,10 +17,12 @@ use crossterm::{
 
 pub const COLUMNS: usize = 10;
 pub const ROWS: usize = 22;
+const BLOCK_FALL_SPEED_MS: u64 = 1000;
 
 fn main() -> io::Result<()> {
     let mut stdout = io::stdout();
     let mut board = Board::new(COLUMNS, ROWS);
+    let mut block_fall_start_time = Instant::now();
 
     print!("\x1B[2J\x1B[H");
 
@@ -36,7 +38,9 @@ fn main() -> io::Result<()> {
             };
         }
 
-        if poll(Duration::from_millis(500))? {
+        if has_past_less_than_x_ms(BLOCK_FALL_SPEED_MS, block_fall_start_time)
+            && poll(Duration::from_millis(BLOCK_FALL_SPEED_MS))?
+        {
             if let Event::Key(event) = read()? {
                 match event.code {
                     KeyCode::Left | KeyCode::Right => board.move_block_x_axis(event.code),
@@ -49,14 +53,13 @@ fn main() -> io::Result<()> {
                     KeyCode::Char(' ') => while board.try_move_block_down_or_set().is_ok() {},
                     KeyCode::Esc => break,
                     _ => {
-                        // TODO: should re-call poll with the remind time
-                        let _ = board.try_move_block_down_or_set().is_err();
+                        continue;
                     }
                 }
             }
-            // board.move_block_down_or_set().ok;
         } else {
             board.try_move_block_down_or_set().ok();
+            block_fall_start_time = Instant::now()
         }
 
         let term_width = terminal::size()?.0 as usize;
@@ -69,7 +72,11 @@ fn main() -> io::Result<()> {
             .queue(style::Print(formated_board))?
             .flush()?;
     }
-    let term_width = terminal::size()?.0 as usize;
+    let term_width = terminal::size()?.0 as usize; // todo: try to convert into usize else use u16 max
     println!("\n\n{: ^term_width$}\n", "You lost!!");
     Ok(())
+}
+
+fn has_past_less_than_x_ms(x_ms_has_past: u64, start_time: Instant) -> bool {
+    start_time.elapsed() < Duration::from_millis(x_ms_has_past)
 }

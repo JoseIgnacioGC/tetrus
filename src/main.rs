@@ -12,7 +12,7 @@ use std::{
 use crossterm::{
     cursor,
     event::{poll, read, Event, KeyCode},
-    style, terminal, QueueableCommand,
+    style, terminal, ExecutableCommand,
 };
 
 pub const COLUMNS: usize = 10;
@@ -27,6 +27,7 @@ fn main() -> io::Result<()> {
     print!("\x1B[2J\x1B[H");
 
     loop {
+        // Fix: doble even still persist
         if poll(Duration::ZERO)? {
             read()?;
         };
@@ -36,9 +37,7 @@ fn main() -> io::Result<()> {
             if board.try_insert_block(&block).is_err() {
                 break;
             };
-        }
-
-        if has_past_less_than_x_ms(BLOCK_FALL_SPEED_MS, block_fall_start_time)
+        } else if has_past_less_than_x_ms(BLOCK_FALL_SPEED_MS, block_fall_start_time)
             && poll(Duration::from_millis(BLOCK_FALL_SPEED_MS))?
         {
             if let Event::Key(event) = read()? {
@@ -66,12 +65,13 @@ fn main() -> io::Result<()> {
         let formated_board = board.get_formated_board(term_width);
 
         stdout
-            .queue(cursor::MoveTo(ROWS.try_into().unwrap_or(u16::MAX), 0))?
-            .queue(terminal::Clear(terminal::ClearType::FromCursorDown))?
-            .queue(style::Print("\n"))?
-            .queue(style::Print(formated_board))?
+            .execute(cursor::MoveTo(0, 0))?
+            .execute(terminal::Clear(terminal::ClearType::FromCursorDown))?
+            .execute(style::Print("\n"))?
+            .execute(style::Print(formated_board))?
             .flush()?;
     }
+
     let term_width = terminal::size()?.0.into();
     println!("\n\n{: ^term_width$}\n", "You lost!!");
     Ok(())

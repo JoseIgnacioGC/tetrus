@@ -3,6 +3,8 @@ use std::collections::HashSet;
 use crossterm::style::Color;
 use rand::Rng;
 
+use crate::board::Coords;
+
 #[derive(Debug, Clone)]
 pub enum Block {
     Square,
@@ -51,7 +53,7 @@ impl Block {
     //     self.shape().len()
     // }
 
-    pub fn get_coordinates(&self) -> HashSet<(usize, usize, Color)> {
+    pub fn get_coordinates(&self) -> HashSet<Coords> {
         self.shape()
             .0
             .iter()
@@ -65,6 +67,7 @@ impl Block {
     }
 
     pub fn get_random() -> Self {
+        // TODO: replace get_random with get_randoms, a list of all blocks, maby 2
         let index = rand::thread_rng().gen_range(0..BLOCK.len());
         BLOCK[index].clone()
     }

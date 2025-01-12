@@ -48,7 +48,7 @@ fn main() -> io::Result<()> {
                         board.try_move_block_down_or_set().ok();
                     }
                     KeyCode::Char('z') | KeyCode::Char('x') => {
-                        board.try_rotate_block().ok();
+                        board.try_rotate_block(event.code).ok();
                     }
                     KeyCode::Char(' ') => while board.try_move_block_down_or_set().is_ok() {},
                     KeyCode::Esc => break,

@@ -24,7 +24,7 @@ impl BlocksManager {
         manager
     }
 
-    pub fn get_next(&mut self) -> &Block {
+    pub fn get_next_block(&mut self) -> &Block {
         if self.current_index == BLOCKS.len() {
             self.shuffle_blocks_buffer();
             self.current_index = 0;

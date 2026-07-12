@@ -12,7 +12,7 @@ use std::{
 
 use crossterm::{
     cursor,
-    event::{poll, read, Event, KeyCode},
+    event::{poll, read, KeyCode},
     style, terminal, ExecutableCommand,
 };
 
@@ -29,13 +29,8 @@ fn main() -> io::Result<()> {
     print!("\x1B[2J\x1B[H");
 
     loop {
-        // FIX: doble even still persist
-        if poll(Duration::ZERO)? {
-            read()?;
-        };
-
         if !board.is_block_falling {
-            let block = blocks_manager.get_next();
+            let block = blocks_manager.get_next_block();
             if board.try_insert_block(block).is_err() {
                 break;
             };
@@ -43,7 +38,7 @@ fn main() -> io::Result<()> {
         } else if block_fall_start_time.elapsed() < BLOCK_FALL_SPEED_TIME
             && poll(BLOCK_FALL_SPEED_TIME)?
         {
-            if let Event::Key(event) = read()? {
+            if let Some(event) = read()?.as_key_press_event() {
                 match event.code {
                     KeyCode::Left | KeyCode::Right => board.move_block_x_axis(event.code),
                     KeyCode::Down => {

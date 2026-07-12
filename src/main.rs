@@ -1,7 +1,8 @@
 mod blocks;
+mod blocks_manager;
 mod board;
 
-use blocks::Block;
+use blocks_manager::BlocksManager;
 use board::Board;
 
 use std::{
@@ -23,6 +24,7 @@ fn main() -> io::Result<()> {
     let mut stdout = io::stdout();
     let mut board = Board::new(COLUMNS, ROWS);
     let mut block_fall_start_time = Instant::now();
+    let mut blocks_manager = BlocksManager::new();
 
     print!("\x1B[2J\x1B[H");
 
@@ -33,8 +35,8 @@ fn main() -> io::Result<()> {
         };
 
         if !board.is_block_falling {
-            let block = Block::get_random();
-            if board.try_insert_block(&block).is_err() {
+            let block = blocks_manager.get_next();
+            if board.try_insert_block(block).is_err() {
                 break;
             };
             block_fall_start_time = Instant::now();

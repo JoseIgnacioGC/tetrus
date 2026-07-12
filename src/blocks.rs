@@ -1,12 +1,12 @@
 use std::collections::HashSet;
 
 use crossterm::style::Color;
-use rand::Rng;
 
 use crate::board::Coords;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default, Copy)]
 pub enum Block {
+    #[default]
     Square,
     T,
     Line,
@@ -16,7 +16,7 @@ pub enum Block {
     S,
 }
 
-const BLOCK: [Block; 7] = [
+pub const BLOCKS: [Block; 7] = [
     Block::J,
     Block::L,
     Block::Line,
@@ -27,7 +27,24 @@ const BLOCK: [Block; 7] = [
 ];
 
 impl Block {
-    pub fn shape(&self) -> (&'static [&'static [&'static str]], Color) {
+    pub fn get_columns_len(&self) -> usize {
+        self.shape().0[0].len()
+    }
+
+    pub fn get_coordinates(&self) -> HashSet<Coords> {
+        self.shape()
+            .0
+            .iter()
+            .enumerate()
+            .flat_map(|(i, rows)| {
+                rows.iter().enumerate().filter_map(move |(j, &symbol)| {
+                    (symbol == "x").then_some((j, i, self.shape().1))
+                })
+            })
+            .collect()
+    }
+
+    fn shape(&self) -> (&'static [&'static [&'static str]], Color) {
         match *self {
             Self::Square => (&[&["x", "x"], &["x", "x"]], Color::Yellow),
             Self::T => (&[&[".", "x", "."], &["x", "x", "x"]], Color::Magenta),
@@ -44,31 +61,5 @@ impl Block {
             Self::Z => (&[&["x", "x", "."], &[".", "x", "x"]], Color::Red),
             Self::S => (&[&[".", "x", "x"], &["x", "x", "."]], Color::Green),
         }
-    }
-
-    pub fn get_columns_len(&self) -> usize {
-        self.shape().0[0].len()
-    }
-    // pub fn get_rows_len(&self) -> usize {
-    //     self.shape().len()
-    // }
-
-    pub fn get_coordinates(&self) -> HashSet<Coords> {
-        self.shape()
-            .0
-            .iter()
-            .enumerate()
-            .flat_map(|(i, rows)| {
-                rows.iter().enumerate().filter_map(move |(j, &symbol)| {
-                    (symbol == "x").then_some((j, i, self.shape().1))
-                })
-            })
-            .collect()
-    }
-
-    pub fn get_random() -> Self {
-        // TODO: replace get_random with get_randoms, a list of all blocks, maby 2
-        let index = rand::thread_rng().gen_range(0..BLOCK.len());
-        BLOCK[index].clone()
     }
 }

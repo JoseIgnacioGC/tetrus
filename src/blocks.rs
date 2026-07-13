@@ -1,12 +1,13 @@
 use std::collections::HashSet;
 
-use crossterm::style::Color;
+use ratatui::style::Color;
 
 use crate::board::Coords;
 
-#[derive(Debug, Clone, Default, Copy)]
+pub const ORANGE: Color = Color::Rgb(255, 127, 0);
+
+#[derive(Debug, Clone, Copy)]
 pub enum Block {
-    #[default]
     Square,
     T,
     Line,
@@ -16,6 +17,7 @@ pub enum Block {
     S,
 }
 
+// use a crate instead of this array
 pub const BLOCKS: [Block; 7] = [
     Block::J,
     Block::L,
@@ -49,14 +51,7 @@ impl Block {
             Self::Square => (&[&["x", "x"], &["x", "x"]], Color::Yellow),
             Self::T => (&[&[".", "x", "."], &["x", "x", "x"]], Color::Magenta),
             Self::Line => (&[&["x", "x", "x", "x"]], Color::Cyan),
-            Self::L => (
-                &[&[".", ".", "x"], &["x", "x", "x"]],
-                Color::Rgb {
-                    r: 255,
-                    g: 127,
-                    b: 0,
-                },
-            ),
+            Self::L => (&[&[".", ".", "x"], &["x", "x", "x"]], ORANGE),
             Self::J => (&[&["x", ".", "."], &["x", "x", "x"]], Color::Blue),
             Self::Z => (&[&["x", "x", "."], &[".", "x", "x"]], Color::Red),
             Self::S => (&[&[".", "x", "x"], &["x", "x", "."]], Color::Green),

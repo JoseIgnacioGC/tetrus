@@ -1,8 +1,10 @@
-use crate::blocks::Block;
-use crossterm::{
-    event::KeyCode,
-    style::{self, Color, Stylize},
+use crate::blocks::{self, Block};
+use crossterm::event::KeyCode;
+use ratatui::{
+    style::{Color, Stylize},
+    text::{Line, Span, Text},
 };
+
 use std::{
     cmp::{max, min},
     collections::HashSet,
@@ -14,35 +16,29 @@ pub type Coords = (usize, usize, Color);
 pub struct Board {
     columns_len: usize,
     rows_len: usize,
-    title: String,
+    title: Line<'static>,
     coordinates: HashSet<Coords>, // TODO: replace by a HashMap or Vector of HashSet maybe
     block_coordinates: HashSet<Coords>,
-    board: Box<[Box<[style::StyledContent<&'static str>]>]>,
+    board: Box<[Box<[Span<'static>]>]>,
     pub is_block_falling: bool,
 }
 
 impl Board {
     pub fn new(columns_len: usize, rows_len: usize) -> Self {
-        let title = [
+        let title = Line::from(vec![
             "T".red(),
-            "E".with(Color::Rgb {
-                r: 255,
-                g: 127,
-                b: 0,
-            }),
+            "E".fg(blocks::ORANGE),
             "T".yellow(),
             "R".green(),
             "U".cyan(),
             "S".magenta(),
-        ]
-        .map(|s| s.to_string())
-        .join("");
+        ]);
 
         Self {
             columns_len,
             rows_len,
             title,
-            board: vec![vec!["".stylize(); columns_len].into_boxed_slice(); rows_len]
+            board: vec![vec![Span::raw(""); columns_len].into_boxed_slice(); rows_len]
                 .into_boxed_slice(),
             ..Default::default()
         }
@@ -72,7 +68,7 @@ impl Board {
                 if coords.len() == self.columns_len {
                     self.coordinates.retain(|c| !coords.contains(c));
                     return false;
-                };
+                }
                 !coords.is_empty()
             })
             .collect();
@@ -180,7 +176,7 @@ impl Board {
 
         if self.is_block_collinding_with_blocks(&block_coordinates) {
             return Err("no more blocks can be inserted");
-        };
+        }
 
         self.block_coordinates = block_coordinates.clone();
         self.is_block_falling = true;
@@ -240,37 +236,34 @@ impl Board {
         Ok(())
     }
 
-    pub fn get_formated_board(&mut self, term_width: usize) -> String {
+    pub fn get_formated_board(&mut self) -> Text<'static> {
         for x in 0..self.columns_len {
-            self.board[0][x] = " ".stylize()
+            self.board[0][x] = Span::raw(" ");
         }
         for y in 1..self.rows_len {
             for x in 0..self.columns_len {
-                self.board[y][x] = ".".stylize()
+                self.board[y][x] = Span::raw(".");
             }
         }
 
         self.coordinates
             .iter()
-            .for_each(|&(x, y, color)| self.board[y][x] = "■".with(color));
+            .for_each(|&(x, y, color)| self.board[y][x] = "■".fg(color));
         self.block_coordinates
             .iter()
-            .for_each(|&(x, y, color)| self.board[y][x] = "□".with(color));
+            .for_each(|&(x, y, color)| self.board[y][x] = "□".fg(color));
 
-        let padding_left = " ".repeat(term_width / 2 - 3);
-        let title = format!("{}{}", padding_left, self.title);
+        let mut lines = vec![self.title.clone()];
 
-        let padding_left = " ".repeat(term_width / 2 - self.columns_len);
-        let board = self
-            .board
-            .iter()
-            .map(|row| {
-                row.iter()
-                    .fold(String::new(), |acc, s| format!("{} {}", acc, s))
-            })
-            .map(|s| format!("{}{}", padding_left, s))
-            .collect::<Vec<String>>()
-            .join("\n");
-        format!("{}\n{}", title, board)
+        for row in self.board.iter() {
+            let mut line_spans = Vec::new();
+            for span in row.iter() {
+                line_spans.push(Span::raw(" "));
+                line_spans.push(span.clone());
+            }
+            lines.push(Line::from(line_spans));
+        }
+
+        Text::from(lines)
     }
 }

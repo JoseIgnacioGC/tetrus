@@ -3,10 +3,11 @@ use std::collections::HashSet;
 use ratatui::style::Color;
 
 use crate::board::Coords;
+use strum::{EnumCount, VariantArray};
 
 pub const ORANGE: Color = Color::Rgb(255, 127, 0);
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, EnumCount, VariantArray)]
 pub enum Block {
     Square,
     T,
@@ -16,17 +17,6 @@ pub enum Block {
     Z,
     S,
 }
-
-// use a crate instead of this array
-pub const BLOCKS: [Block; 7] = [
-    Block::J,
-    Block::L,
-    Block::Line,
-    Block::S,
-    Block::Square,
-    Block::T,
-    Block::Z,
-];
 
 impl Block {
     pub fn get_columns_len(&self) -> usize {

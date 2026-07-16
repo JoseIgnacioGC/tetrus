@@ -1384,6 +1384,7 @@ dependencies = [
  "crossterm",
  "rand 0.10.2",
  "ratatui",
+ "strum",
 ]
 
 [[package]]

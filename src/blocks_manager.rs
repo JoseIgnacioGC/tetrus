@@ -1,9 +1,10 @@
-use crate::blocks::{Block, BLOCKS};
+use crate::blocks::Block;
 
 use rand::{rngs::SmallRng, seq::SliceRandom};
+use strum::{EnumCount, VariantArray};
 
 pub struct BlocksManager {
-    blocks_buffer: [Block; 7],
+    blocks_buffer: [Block; Block::COUNT],
     current_index: usize,
     rng: SmallRng,
 }
@@ -11,7 +12,7 @@ pub struct BlocksManager {
 impl BlocksManager {
     pub fn new() -> Self {
         let mut rng = rand::make_rng();
-        let mut blocks_buffer = BLOCKS;
+        let mut blocks_buffer: [Block; Block::COUNT] = Block::VARIANTS.try_into().unwrap();
 
         blocks_buffer.shuffle(&mut rng);
 
@@ -23,7 +24,7 @@ impl BlocksManager {
     }
 
     pub fn get_next_block(&mut self) -> &Block {
-        if self.current_index == BLOCKS.len() {
+        if self.current_index == Block::COUNT {
             self.blocks_buffer.shuffle(&mut self.rng);
             self.current_index = 0;
         }

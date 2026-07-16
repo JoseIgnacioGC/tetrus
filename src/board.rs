@@ -47,6 +47,93 @@ impl Board {
         }
     }
 
+    pub fn rotate_block(&mut self, key: KeyCode) -> bool {
+        // mave should not return an error
+        let rotated_block: HashSet<Coords> = self.rotate_block_coordinates(key);
+
+        if rotated_block.len() != self.block_coordinates.len()
+            || self.is_block_collinding_with_blocks(&rotated_block)
+        {
+            return false;
+        }
+
+        let _ = std::mem::replace(&mut self.block_coordinates, rotated_block);
+        true
+    }
+
+    pub fn insert_block(&mut self, block: &Block) -> bool {
+        let center_coordinates_x =
+            self.columns_len / 2 - block.get_columns_len() / 2 - (block.get_columns_len() % 2);
+        let block_coordinates = block.get_coordinates();
+        let block_coordinates = block_coordinates
+            .iter()
+            .map(|(x, y, color)| (x + center_coordinates_x, *y, *color))
+            .collect();
+
+        if self.is_block_collinding_with_blocks(&block_coordinates) {
+            return false;
+        }
+
+        self.block_coordinates = block_coordinates.clone();
+        self.is_block_falling = true;
+
+        true
+    }
+
+    pub fn move_block_x_axis(&mut self, key: KeyCode) {
+        let moved_block: HashSet<Coords> = self
+            .block_coordinates
+            .iter()
+            .map_while(|(x, y, color)| {
+                if (*x == 0 && key == KeyCode::Left)
+                    || (*x == self.columns_len - 1 && key == KeyCode::Right)
+                {
+                    return None;
+                }
+                let x = if key == KeyCode::Left { x - 1 } else { x + 1 };
+                Some((x, *y, *color))
+            })
+            .collect();
+
+        if moved_block.len() != self.block_coordinates.len()
+            || self.is_block_collinding_with_blocks(&moved_block)
+        {
+            return;
+        }
+        self.block_coordinates = moved_block;
+    }
+
+    pub fn move_block_down_or_set(&mut self) -> bool {
+        let moved_block: HashSet<Coords> = self
+            .block_coordinates
+            .iter()
+            .map_while(|(x, y, color)| {
+                let y = y + 1;
+                (y < self.rows_len).then_some((*x, y, *color))
+            })
+            .collect();
+
+        if moved_block.len() != self.block_coordinates.len() {
+            self.coordinates.extend(&self.block_coordinates);
+            self.block_coordinates.clear();
+            self.clear_lines();
+            self.is_block_falling = false;
+
+            return false;
+        }
+        if self.is_block_collinding_with_blocks(&moved_block) {
+            self.coordinates.extend(&self.block_coordinates);
+            self.block_coordinates.clear();
+            self.clear_lines();
+            self.is_block_falling = false;
+
+            return false;
+        }
+        self.block_coordinates = moved_block;
+
+        true
+    }
+
     fn is_block_collinding_with_blocks(&self, block_coordinates: &HashSet<Coords>) -> bool {
         let board_coords: HashSet<(usize, usize)> =
             self.coordinates.iter().map(|(x, y, _)| (*x, *y)).collect();
@@ -152,122 +239,6 @@ impl Board {
         });
 
         rotated_block
-    }
-
-    pub fn try_rotate_block(&mut self, key: KeyCode) -> Result<(), &str> {
-        // mave should not return an error
-        let rotated_block: HashSet<Coords> = self.rotate_block_coordinates(key);
-
-        if rotated_block.len() != self.block_coordinates.len()
-            || self.is_block_collinding_with_blocks(&rotated_block)
-        {
-            return Err("Cannot rotate left");
-        }
-
-        let _ = std::mem::replace(&mut self.block_coordinates, rotated_block);
-        Ok(())
-    }
-
-    pub fn try_insert_block(&mut self, block: &Block) -> Result<(), &str> {
-        let center_coordinates_x =
-            self.columns_len / 2 - block.get_columns_len() / 2 - (block.get_columns_len() % 2);
-        let block_coordinates = block.get_coordinates();
-        let block_coordinates = block_coordinates
-            .iter()
-            .map(|(x, y, color)| (x + center_coordinates_x, *y, *color))
-            .collect();
-
-        if self.is_block_collinding_with_blocks(&block_coordinates) {
-            return Err("no more blocks can be inserted");
-        }
-
-        self.block_coordinates = block_coordinates.clone();
-        self.is_block_falling = true;
-        Ok(())
-    }
-
-    pub fn move_block_x_axis(&mut self, key: KeyCode) {
-        let moved_block: HashSet<Coords> = self
-            .block_coordinates
-            .iter()
-            .map_while(|(x, y, color)| {
-                if (*x == 0 && key == KeyCode::Left)
-                    || (*x == self.columns_len - 1 && key == KeyCode::Right)
-                {
-                    return None;
-                }
-                let x = if key == KeyCode::Left { x - 1 } else { x + 1 };
-                Some((x, *y, *color))
-            })
-            .collect();
-
-        if moved_block.len() != self.block_coordinates.len()
-            || self.is_block_collinding_with_blocks(&moved_block)
-        {
-            return;
-        }
-        self.block_coordinates = moved_block;
-    }
-
-    pub fn try_move_block_down_or_set(&mut self) -> Result<(), &str> {
-        let moved_block: HashSet<Coords> = self
-            .block_coordinates
-            .iter()
-            .map_while(|(x, y, color)| {
-                let y = y + 1;
-                (y < self.rows_len).then_some((*x, y, *color))
-            })
-            .collect();
-
-        if moved_block.len() != self.block_coordinates.len() {
-            self.coordinates.extend(&self.block_coordinates);
-            self.block_coordinates.clear();
-            self.clear_lines();
-            self.is_block_falling = false;
-
-            return Err("block collides with shape");
-        }
-        if self.is_block_collinding_with_blocks(&moved_block) {
-            self.coordinates.extend(&self.block_coordinates);
-            self.block_coordinates.clear();
-            self.clear_lines();
-            self.is_block_falling = false;
-
-            return Err("block collides with a block");
-        }
-        self.block_coordinates = moved_block;
-        Ok(())
-    }
-
-    pub fn get_formated_board(&mut self) -> Text<'static> {
-        for x in 0..self.columns_len {
-            self.board[0][x] = Span::raw(" ");
-        }
-        for y in 1..self.rows_len {
-            for x in 0..self.columns_len {
-                self.board[y][x] = Span::raw(".");
-            }
-        }
-
-        self.coordinates
-            .iter()
-            .for_each(|&(x, y, color)| self.board[y][x] = "■".fg(color));
-        self.block_coordinates
-            .iter()
-            .for_each(|&(x, y, color)| self.board[y][x] = "□".fg(color));
-
-        let mut lines = vec![self.title.clone()];
-
-        for row in self.board.iter() {
-            let mut line_spans = Vec::new();
-            for span in row.iter() {
-                line_spans.push(Span::raw(" "));
-                line_spans.push(span.clone());
-            }
-            lines.push(Line::from(line_spans));
-        }
-
-        Text::from(lines)
     }
 }
 

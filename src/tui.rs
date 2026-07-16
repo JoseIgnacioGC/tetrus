@@ -12,7 +12,6 @@ const COLUMNS: usize = 10;
 const ROWS: usize = 22;
 const BLOCK_FALL_AWAIT_TIME: Duration = Duration::from_millis(500);
 
-#[derive(Default)]
 pub struct App;
 
 impl App {
@@ -24,7 +23,7 @@ impl App {
         loop {
             if !board.is_block_falling {
                 let block = blocks_manager.get_next_block();
-                if board.try_insert_block(block).is_err() {
+                if !board.insert_block(block) {
                     break;
                 };
                 block_fall_start_time = Instant::now();
@@ -35,18 +34,18 @@ impl App {
                     match event.code {
                         KeyCode::Left | KeyCode::Right => board.move_block_x_axis(event.code),
                         KeyCode::Down => {
-                            let _ = board.try_move_block_down_or_set();
+                            let _ = board.move_block_down_or_set();
                         }
                         KeyCode::Char('z') | KeyCode::Char('x') => {
-                            let _ = board.try_rotate_block(event.code);
+                            let _ = board.rotate_block(event.code);
                         }
-                        KeyCode::Char(' ') => while board.try_move_block_down_or_set().is_ok() {},
+                        KeyCode::Char(' ') => while board.move_block_down_or_set() {},
                         KeyCode::Esc => break,
                         _ => continue,
                     }
                 }
             } else {
-                board.try_move_block_down_or_set().ok();
+                let _ = board.move_block_down_or_set();
                 block_fall_start_time = Instant::now();
             };
 

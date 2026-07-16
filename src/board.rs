@@ -1,10 +1,10 @@
-use crate::blocks::{self, Block};
+use crate::blocks::Block;
 use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
     style::{Color, Stylize},
-    text::{Line, Span, Text, ToLine},
+    text::{Line, Span, Text},
     widgets::{Paragraph, Widget},
 };
 
@@ -17,30 +17,20 @@ pub type Coords = (usize, usize, Color);
 
 #[derive(Default)]
 pub struct Board {
+    pub is_block_falling: bool,
+
     columns_len: usize,
     rows_len: usize,
-    title: Line<'static>,
     coordinates: HashSet<Coords>, // TODO: replace by a HashMap or Vector of HashSet maybe
     block_coordinates: HashSet<Coords>,
     board: Box<[Box<[Span<'static>]>]>,
-    pub is_block_falling: bool,
 }
 
 impl Board {
     pub fn new(columns_len: usize, rows_len: usize) -> Self {
-        let title = Line::from(vec![
-            "T".red(),
-            "E".fg(blocks::ORANGE),
-            "T".yellow(),
-            "R".green(),
-            "U".cyan(),
-            "S".magenta(),
-        ]);
-
         Self {
             columns_len,
             rows_len,
-            title,
             board: vec![vec![Span::raw(""); columns_len].into_boxed_slice(); rows_len]
                 .into_boxed_slice(),
             ..Default::default()
@@ -48,7 +38,6 @@ impl Board {
     }
 
     pub fn rotate_block(&mut self, key: KeyCode) -> bool {
-        // mave should not return an error
         let rotated_block: HashSet<Coords> = self.rotate_block_coordinates(key);
 
         if rotated_block.len() != self.block_coordinates.len()
@@ -178,6 +167,7 @@ impl Board {
         self.coordinates = shifted_coords;
     }
 
+    // TODO: Improve blocks rotation behavior
     fn rotate_block_coordinates(&self, key: KeyCode) -> HashSet<Coords> {
         let mut block_color: Option<Color> = None;
         let (y_axis_min_max_coords, x_axis_min_max_coords) = self.block_coordinates.iter().fold(
@@ -260,7 +250,7 @@ impl Widget for &mut Board {
             .iter()
             .for_each(|&(x, y, color)| self.board[y][x] = "□".fg(color));
 
-        let mut lines = vec!["\n".to_line(), self.title.clone(), "\n".to_line()];
+        let mut lines = vec![];
 
         for row in self.board.iter() {
             let mut line_spans = Vec::new();

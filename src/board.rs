@@ -1,8 +1,11 @@
 use crate::blocks::{self, Block};
 use crossterm::event::KeyCode;
 use ratatui::{
+    buffer::Buffer,
+    layout::Rect,
     style::{Color, Stylize},
-    text::{Line, Span, Text},
+    text::{Line, Span, Text, ToLine},
+    widgets::{Paragraph, Widget},
 };
 
 use std::{
@@ -265,5 +268,40 @@ impl Board {
         }
 
         Text::from(lines)
+    }
+}
+
+impl Widget for &mut Board {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        for x in 0..self.columns_len {
+            self.board[0][x] = Span::raw(" ");
+        }
+        for y in 1..self.rows_len {
+            for x in 0..self.columns_len {
+                self.board[y][x] = Span::raw(".");
+            }
+        }
+
+        self.coordinates
+            .iter()
+            .for_each(|&(x, y, color)| self.board[y][x] = "■".fg(color));
+        self.block_coordinates
+            .iter()
+            .for_each(|&(x, y, color)| self.board[y][x] = "□".fg(color));
+
+        let mut lines = vec!["\n".to_line(), self.title.clone(), "\n".to_line()];
+
+        for row in self.board.iter() {
+            let mut line_spans = Vec::new();
+            for span in row.iter() {
+                line_spans.push(Span::raw(" "));
+                line_spans.push(span.clone());
+            }
+            lines.push(Line::from(line_spans));
+        }
+
+        Paragraph::new(Text::from(lines))
+            .centered()
+            .render(area, buf);
     }
 }

@@ -4,10 +4,7 @@ use std::{
 };
 
 use crossterm::event::{self, KeyCode};
-use ratatui::{
-    widgets::{Block, Paragraph},
-    DefaultTerminal,
-};
+use ratatui::DefaultTerminal;
 
 use crate::{blocks_manager::BlocksManager, board::Board};
 
@@ -32,7 +29,7 @@ impl App {
                 };
                 block_fall_start_time = Instant::now();
             } else if block_fall_start_time.elapsed() < BLOCK_FALL_AWAIT_TIME
-        && /* FIX: touch any key triggers this */ event::poll(BLOCK_FALL_AWAIT_TIME)?
+                    && /* FIX: touch any key triggers this */ event::poll(BLOCK_FALL_AWAIT_TIME)?
             {
                 if let Some(event) = event::read().map_or(None, |e| e.as_key_press_event()) {
                     match event.code {
@@ -53,13 +50,8 @@ impl App {
                 block_fall_start_time = Instant::now();
             };
 
-            let formated_board = board.get_formated_board();
-
             terminal.draw(|frame| {
-                let block = Block::default();
-                let body = Paragraph::new(formated_board).centered().block(block);
-
-                frame.render_widget(body, frame.area());
+                frame.render_widget(&mut board, frame.area());
             })?;
         }
 

@@ -13,26 +13,26 @@ use std::{
     collections::HashSet,
 };
 
-pub type Coords = (usize, usize, Color);
+pub type Coords = (u16, u16, Color);
 
 #[derive(Default)]
 pub struct Board {
     pub is_block_falling: bool,
+    pub cleaned_lines: usize,
 
-    columns_len: usize,
-    rows_len: usize,
+    columns_len: u16,
+    rows_len: u16,
     coordinates: HashSet<Coords>, // TODO: replace by a HashMap or Vector of HashSet maybe
     block_coordinates: HashSet<Coords>,
-    board: Box<[Box<[Span<'static>]>]>,
+    board: Vec<Vec<Span<'static>>>,
 }
 
 impl Board {
-    pub fn new(columns_len: usize, rows_len: usize) -> Self {
+    pub fn new(columns_len: u16, rows_len: u16) -> Self {
         Self {
             columns_len,
             rows_len,
-            board: vec![vec![Span::raw(""); columns_len].into_boxed_slice(); rows_len]
-                .into_boxed_slice(),
+            board: vec![vec![Span::raw(""); columns_len as usize]; rows_len as usize],
             ..Default::default()
         }
     }
@@ -124,9 +124,9 @@ impl Board {
     }
 
     fn is_block_collinding_with_blocks(&self, block_coordinates: &HashSet<Coords>) -> bool {
-        let board_coords: HashSet<(usize, usize)> =
+        let board_coords: HashSet<(u16, u16)> =
             self.coordinates.iter().map(|(x, y, _)| (*x, *y)).collect();
-        let block_coords: HashSet<(usize, usize)> =
+        let block_coords: HashSet<(u16, u16)> =
             block_coordinates.iter().map(|(x, y, _)| (*x, *y)).collect();
         !board_coords.is_disjoint(&block_coords)
             || block_coords.iter().any(|(_, y)| *y > self.rows_len)
@@ -134,17 +134,17 @@ impl Board {
 
     fn clear_lines(&mut self) {
         let shorted_coords: Vec<HashSet<Coords>> = self.coordinates.iter().fold(
-            vec![HashSet::new(); self.rows_len],
+            vec![HashSet::new(); self.rows_len as usize],
             |mut acc: Vec<HashSet<Coords>>, coordinates| {
                 let y = coordinates.1;
-                acc[y].insert(*coordinates);
+                acc[y as usize].insert(*coordinates);
                 acc
             },
         );
         let uncompleted_columns: Vec<&HashSet<Coords>> = shorted_coords
             .iter()
             .filter(|coords| {
-                if coords.len() == self.columns_len {
+                if coords.len() as u16 == self.columns_len {
                     self.coordinates.retain(|c| !coords.contains(c));
                     return false;
                 }
@@ -157,7 +157,7 @@ impl Board {
             |mut acc: HashSet<Coords>, (i, coords)| {
                 let shifted: Vec<Coords> = coords
                     .iter()
-                    .map(|(x, _, colors)| (*x, self.rows_len - 1 - i, *colors))
+                    .map(|(x, _, colors)| (*x, self.rows_len - 1 - (i as u16), *colors))
                     .collect();
                 acc.extend(shifted);
                 acc
@@ -171,7 +171,7 @@ impl Board {
     fn rotate_block_coordinates(&self, key: KeyCode) -> HashSet<Coords> {
         let mut block_color: Option<Color> = None;
         let (y_axis_min_max_coords, x_axis_min_max_coords) = self.block_coordinates.iter().fold(
-            ((usize::MAX, 0), (usize::MAX, 0)),
+            ((u16::MAX, 0), (u16::MAX, 0)),
             |((y_min, y_max), (x_min, x_max)), (x, y, color)| {
                 if block_color.is_none() {
                     block_color = Some(*color);
@@ -186,18 +186,18 @@ impl Board {
 
         let max_row_len = (y_axis_min_max_coords.1 - y_axis_min_max_coords.0) + 1;
         let max_column_len = (x_axis_min_max_coords.1 - x_axis_min_max_coords.0) + 1;
-        let matrix_len = max(max_row_len, max_column_len);
+        let matrix_len = max(max_row_len, max_column_len) as usize;
 
-        let mut matrix: Vec<Vec<usize>> = vec![vec![0; matrix_len]; matrix_len];
+        let mut matrix: Vec<Vec<bool>> = vec![vec![false; matrix_len]; matrix_len];
 
         self.block_coordinates.iter().for_each(|(x, y, _)| {
             let x = x - x_axis_min_max_coords.0;
             let y = y - y_axis_min_max_coords.0;
-            matrix[y][x] = 1;
+            matrix[y as usize][x as usize] = true;
         });
 
         if key == KeyCode::Char('x') {
-            matrix = matrix.into_iter().rev().collect::<Vec<Vec<usize>>>();
+            matrix = matrix.into_iter().rev().collect::<Vec<Vec<bool>>>();
 
             matrix = (0usize..matrix[0].len())
                 .map(|i| matrix.iter().map(|row| row[i]).collect())
@@ -207,18 +207,18 @@ impl Board {
                 .map(|i| matrix.iter().map(|row| row[i]).collect())
                 .collect();
 
-            matrix = matrix.into_iter().rev().collect::<Vec<Vec<usize>>>();
+            matrix = matrix.into_iter().rev().collect::<Vec<Vec<bool>>>();
         }
 
         let mut rotated_block = HashSet::<Coords>::new();
 
         matrix.iter().enumerate().for_each(|(y, row)| {
             row.iter().enumerate().for_each(|(x, value)| {
-                if *value != 1 {
+                if !*value {
                     return;
                 }
-                let x = x + x_axis_min_max_coords.0;
-                let y = y + y_axis_min_max_coords.0;
+                let x = x as u16 + x_axis_min_max_coords.0;
+                let y = y as u16 + y_axis_min_max_coords.0;
 
                 if x >= self.columns_len || y >= self.rows_len {
                     return;
@@ -233,22 +233,23 @@ impl Board {
 }
 
 impl Widget for &mut Board {
+    // TODO: write to the buffer instead of creating a paragraph
     fn render(self, area: Rect, buf: &mut Buffer) {
         for x in 0..self.columns_len {
-            self.board[0][x] = Span::raw(" ");
+            self.board[0][x as usize] = Span::raw(" ");
         }
         for y in 1..self.rows_len {
             for x in 0..self.columns_len {
-                self.board[y][x] = Span::raw(".");
+                self.board[y as usize][x as usize] = Span::raw(".");
             }
         }
 
         self.coordinates
             .iter()
-            .for_each(|&(x, y, color)| self.board[y][x] = "■".fg(color));
+            .for_each(|&(x, y, color)| self.board[y as usize][x as usize] = "■".fg(color));
         self.block_coordinates
             .iter()
-            .for_each(|&(x, y, color)| self.board[y][x] = "□".fg(color));
+            .for_each(|&(x, y, color)| self.board[y as usize][x as usize] = "□".fg(color));
 
         let mut lines = vec![];
 

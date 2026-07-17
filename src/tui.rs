@@ -12,17 +12,28 @@ use ratatui::{
     DefaultTerminal, Frame,
 };
 
-use crate::{blocks, blocks_manager::BlocksManager, board::Board};
+use crate::{
+    blocks,
+    blocks_manager::BlocksManager,
+    board::Board,
+    utils::{integer_format::usize_to_superscript, time::format_instant},
+};
 
-const COLUMNS: usize = 10;
-const ROWS: usize = 22;
-const BLOCK_FALL_AWAIT_TIME: Duration = Duration::from_millis(500);
+const COLUMNS: u16 = 10;
+const ROWS: u16 = 22;
 
-pub struct App {
+pub struct Game {
     title: Line<'static>,
+
+    time: Instant,
+    fall_speed_secs: Duration,
+    score: usize,
+    lines: usize,
+    level: usize,
+    fps: usize,
 }
 
-impl App {
+impl Game {
     pub fn new() -> Self {
         let title = line![
             "T".red(),
@@ -34,23 +45,32 @@ impl App {
         ]
         .centered();
 
-        Self { title }
+        Self {
+            title,
+            time: Instant::now(),
+            fall_speed_secs: Duration::ZERO,
+            level: 1,
+            lines: 0,
+            score: 0,
+            fps: 0,
+        }
     }
 
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
         let mut board = Board::new(COLUMNS, ROWS);
-        let mut block_fall_start_time = Instant::now();
+        let mut block_fall_start_time = self.time;
         let mut blocks_manager = BlocksManager::new();
 
         loop {
+            self.set_fall_speed();
             if !board.is_block_falling {
                 let block = blocks_manager.get_next_block();
                 if !board.insert_block(block) {
                     break;
                 };
                 block_fall_start_time = Instant::now();
-            } else if block_fall_start_time.elapsed() < BLOCK_FALL_AWAIT_TIME
-                    && /* TODO: touch any key triggers this */ event::poll(BLOCK_FALL_AWAIT_TIME)?
+            } else if block_fall_start_time.elapsed() < self.fall_speed_secs
+                    && /* TODO: touch any key triggers this */ event::poll(self.fall_speed_secs)?
             {
                 if let Some(event) = event::read().map_or(None, |e| e.as_key_press_event()) {
                     match event.code {
@@ -79,30 +99,50 @@ impl App {
     }
 
     fn render(&self, frame: &mut Frame, board: &mut Board) {
-        let [title_area, game_area] = vertical![== 3,== ROWS as u16].areas(frame.area());
+        let [title_area, game_area] = vertical![== 3,== ROWS].areas(frame.area());
         let [left_area, board_area, next_blocks_area] =
-            horizontal![*= 1, == (COLUMNS * 2 + 3) as u16, *= 1].areas(game_area);
+            horizontal![*= 1, == COLUMNS * 2 + 3, *= 1].areas(game_area);
         let [hold_area, metrics_area] = vertical![== 100%, == 8].areas(left_area);
 
         frame.render_widget(
             &self.title,
             title_area.centered_vertically(constraint!(== 1)),
         );
+
         frame.render_widget(board, board_area);
         frame.render_widget(
             Paragraph::new(text![
                 "lv\n",
-                "²\n",
+                usize_to_superscript(self.level),
                 "score\n",
-                "⁴ˑ²⁶⁶ˑ⁵⁶⁷\n",
+                usize_to_superscript(self.score),
                 "lines\n",
-                "²⁰⁄³⁰\n",
+                format!(
+                    "{}⁄{}",
+                    usize_to_superscript(self.lines),
+                    usize_to_superscript(self.level * 5)
+                ),
                 "time\n",
-                "1:01.02",
+                format_instant(&self.time),
             ])
             .right_aligned(),
             metrics_area,
         );
+
+        #[cfg(debug_assertions)]
+        {
+            use ratatui::layout::Offset;
+
+            frame.render_widget(
+                text![
+                    "[debug]\n",
+                    format!("fps: {}\n", self.fps),
+                    format!("fall_speed: {}", self.fall_speed_secs.as_secs())
+                ]
+                .left_aligned(),
+                metrics_area.offset(Offset::new(3, 0)),
+            );
+        }
 
         frame.render_widget(
             Paragraph::new("hold")
@@ -116,5 +156,16 @@ impl App {
                 .left_aligned(),
             next_blocks_area,
         );
+    }
+
+    fn set_fall_speed(&mut self) {
+        const MAX_FALL_SPEED: usize = 20;
+        if self.level > MAX_FALL_SPEED {
+            return;
+        }
+
+        self.fall_speed_secs = Duration::from_secs_f32(
+            (0.8 - ((self.level as f32 - 1.0) * 0.007)).powf(self.level as f32 - 1.0),
+        )
     }
 }

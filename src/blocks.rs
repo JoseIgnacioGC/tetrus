@@ -19,8 +19,8 @@ pub enum Block {
 }
 
 impl Block {
-    pub fn get_columns_len(&self) -> usize {
-        self.shape().0[0].len()
+    pub fn get_columns_len(&self) -> u16 {
+        self.shape().0[0].len() as u16
     }
 
     pub fn get_coordinates(&self) -> HashSet<Coords> {
@@ -30,7 +30,7 @@ impl Block {
             .enumerate()
             .flat_map(|(i, rows)| {
                 rows.iter().enumerate().filter_map(move |(j, &symbol)| {
-                    (symbol == "x").then_some((j, i, self.shape().1))
+                    (symbol == "x").then_some((j as u16, i as u16, self.shape().1))
                 })
             })
             .collect()

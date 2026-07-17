@@ -5,6 +5,7 @@ use std::{
 
 use crossterm::event::{self, KeyCode};
 use ratatui::{
+    layout::Offset,
     macros::{constraint, horizontal, line, text, vertical},
     style::Stylize,
     text::Line,
@@ -26,7 +27,7 @@ pub struct Game {
     title: Line<'static>,
 
     time: Instant,
-    fall_speed_secs: Duration,
+    fall_speed: Duration,
     score: usize,
     lines: usize,
     level: usize,
@@ -48,30 +49,33 @@ impl Game {
         Self {
             title,
             time: Instant::now(),
-            fall_speed_secs: Duration::ZERO,
-            level: 1,
+            fall_speed: Duration::ZERO,
+            level: 5,
             lines: 0,
             score: 0,
-            fps: 0,
+            fps: 60,
         }
     }
 
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
         let mut board = Board::new(COLUMNS, ROWS);
-        let mut block_fall_start_time = self.time;
         let mut blocks_manager = BlocksManager::new();
+        let mut block_fall_start_time = self.time;
 
         loop {
-            self.set_fall_speed();
+            self.update_fall_speed();
+
             if !board.is_block_falling {
                 let block = blocks_manager.get_next_block();
                 if !board.insert_block(block) {
                     break;
                 };
                 block_fall_start_time = Instant::now();
-            } else if block_fall_start_time.elapsed() < self.fall_speed_secs
-                    && /* TODO: touch any key triggers this */ event::poll(self.fall_speed_secs)?
-            {
+                terminal.draw(|frame| self.render(frame, &mut board))?;
+                continue;
+            }
+
+            if block_fall_start_time.elapsed() < self.fall_speed && event::poll(self.fall_speed)? {
                 if let Some(event) = event::read().map_or(None, |e| e.as_key_press_event()) {
                     match event.code {
                         KeyCode::Left | KeyCode::Right => board.move_block_x_axis(event.code),
@@ -98,7 +102,7 @@ impl Game {
         Ok(())
     }
 
-    fn render(&self, frame: &mut Frame, board: &mut Board) {
+    fn render(&mut self, frame: &mut Frame, board: &mut Board) {
         let [title_area, game_area] = vertical![== 3,== ROWS].areas(frame.area());
         let [left_area, board_area, next_blocks_area] =
             horizontal![*= 1, == COLUMNS * 2 + 3, *= 1].areas(game_area);
@@ -131,13 +135,11 @@ impl Game {
 
         #[cfg(debug_assertions)]
         {
-            use ratatui::layout::Offset;
-
             frame.render_widget(
                 text![
                     "[debug]\n",
                     format!("fps: {}\n", self.fps),
-                    format!("fall_speed: {}", self.fall_speed_secs.as_secs())
+                    format!("fall_speed: {}", self.fall_speed.as_secs_f32()),
                 ]
                 .left_aligned(),
                 metrics_area.offset(Offset::new(3, 0)),
@@ -158,13 +160,13 @@ impl Game {
         );
     }
 
-    fn set_fall_speed(&mut self) {
+    fn update_fall_speed(&mut self) {
         const MAX_FALL_SPEED: usize = 20;
         if self.level > MAX_FALL_SPEED {
             return;
         }
 
-        self.fall_speed_secs = Duration::from_secs_f32(
+        self.fall_speed = Duration::from_secs_f32(
             (0.8 - ((self.level as f32 - 1.0) * 0.007)).powf(self.level as f32 - 1.0),
         )
     }

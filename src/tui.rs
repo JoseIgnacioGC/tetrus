@@ -108,6 +108,8 @@ impl Game {
             if acc_time >= self.fall_speed {
                 acc_time -= self.fall_speed;
                 let _ = board.move_block_down_or_set();
+                self.draw(terminal, &mut board);
+                continue;
             }
             let wait_time = TICK_60FPS_INTERVAL.saturating_sub(current_time.elapsed());
 
@@ -129,7 +131,6 @@ impl Game {
             }
 
             self.draw(terminal, &mut board);
-            // terminal.draw(|frame| self.draw(terminal, &mut board))?;
         }
 
         ratatui::restore();

@@ -10,7 +10,7 @@ use ratatui::{
     style::Stylize,
     text::Line,
     widgets::{Block, Paragraph},
-    DefaultTerminal, Frame,
+    DefaultTerminal,
 };
 
 use crate::{
@@ -22,7 +22,9 @@ use crate::{
 
 const COLUMNS: u16 = 10;
 const ROWS: u16 = 22;
+const TICK_60FPS_INTERVAL: Duration = Duration::from_millis(16);
 
+// TODO: refactor code following this style: https://github.com/ratatui/ratatui/blob/main/examples/apps/colors-rgb/src/main.rs#L69
 pub struct Game {
     title: Line<'static>,
 
@@ -50,7 +52,7 @@ impl Game {
             title,
             time: Instant::now(),
             fall_speed: Duration::ZERO,
-            level: 5,
+            level: 1,
             lines: 0,
             score: 0,
             fps: 60,
@@ -60,9 +62,34 @@ impl Game {
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
         let mut board = Board::new(COLUMNS, ROWS);
         let mut blocks_manager = BlocksManager::new();
-        let mut block_fall_start_time = self.time;
 
+        let mut last_tick = Instant::now();
+        let mut acc_time = Duration::ZERO;
+
+        let mut last_fps_count = Instant::now();
+        let mut fps_counter = 0;
+
+        let mut dumb_time = Duration::ZERO;
         loop {
+            let current_time = Instant::now();
+            let delta_time = current_time.duration_since(last_tick);
+
+            last_tick = current_time;
+            acc_time += delta_time;
+
+            fps_counter += 1;
+            if current_time.duration_since(last_fps_count) >= Duration::from_secs(1) {
+                self.fps = fps_counter;
+                fps_counter = 0;
+                last_fps_count = current_time
+            }
+
+            dumb_time += delta_time;
+            if dumb_time.as_secs_f32() >= 5.0 {
+                self.level += 1;
+                dumb_time = Duration::ZERO;
+            }
+
             self.update_fall_speed();
 
             if !board.is_block_falling {
@@ -70,12 +97,21 @@ impl Game {
                 if !board.insert_block(block) {
                     break;
                 };
-                block_fall_start_time = Instant::now();
-                terminal.draw(|frame| self.render(frame, &mut board))?;
+                self.draw(terminal, &mut board);
+
+                if acc_time >= self.fall_speed {
+                    acc_time -= self.fall_speed;
+                }
                 continue;
             }
 
-            if block_fall_start_time.elapsed() < self.fall_speed && event::poll(self.fall_speed)? {
+            if acc_time >= self.fall_speed {
+                acc_time -= self.fall_speed;
+                let _ = board.move_block_down_or_set();
+            }
+            let wait_time = TICK_60FPS_INTERVAL.saturating_sub(current_time.elapsed());
+
+            if event::poll(wait_time)? {
                 if let Some(event) = event::read().map_or(None, |e| e.as_key_press_event()) {
                     match event.code {
                         KeyCode::Left | KeyCode::Right => board.move_block_x_axis(event.code),
@@ -87,77 +123,79 @@ impl Game {
                         }
                         KeyCode::Char(' ') => while board.move_block_down_or_set() {},
                         KeyCode::Esc => break,
-                        _ => continue,
+                        _ => (),
                     }
                 }
-            } else {
-                let _ = board.move_block_down_or_set();
-                block_fall_start_time = Instant::now();
-            };
+            }
 
-            terminal.draw(|frame| self.render(frame, &mut board))?;
+            self.draw(terminal, &mut board);
+            // terminal.draw(|frame| self.draw(terminal, &mut board))?;
         }
 
         ratatui::restore();
         Ok(())
     }
 
-    fn render(&mut self, frame: &mut Frame, board: &mut Board) {
-        let [title_area, game_area] = vertical![== 3,== ROWS].areas(frame.area());
-        let [left_area, board_area, next_blocks_area] =
-            horizontal![*= 1, == COLUMNS * 2 + 3, *= 1].areas(game_area);
-        let [hold_area, metrics_area] = vertical![== 100%, == 8].areas(left_area);
+    fn draw(&mut self, terminal: &mut DefaultTerminal, board: &mut Board) {
+        terminal
+            .draw(|frame| {
+                let [title_area, game_area] = vertical![== 3,== ROWS].areas(frame.area());
+                let [left_area, board_area, next_blocks_area] =
+                    horizontal![*= 1, == COLUMNS * 2 + 3, *= 1].areas(game_area);
+                let [hold_area, metrics_area] = vertical![== 100%, == 8].areas(left_area);
 
-        frame.render_widget(
-            &self.title,
-            title_area.centered_vertically(constraint!(== 1)),
-        );
+                frame.render_widget(
+                    &self.title,
+                    title_area.centered_vertically(constraint!(== 1)),
+                );
 
-        frame.render_widget(board, board_area);
-        frame.render_widget(
-            Paragraph::new(text![
-                "lv\n",
-                usize_to_superscript(self.level),
-                "score\n",
-                usize_to_superscript(self.score),
-                "lines\n",
-                format!(
-                    "{}⁄{}",
-                    usize_to_superscript(self.lines),
-                    usize_to_superscript(self.level * 5)
-                ),
-                "time\n",
-                format_instant(&self.time),
-            ])
-            .right_aligned(),
-            metrics_area,
-        );
+                frame.render_widget(board, board_area);
+                frame.render_widget(
+                    Paragraph::new(text![
+                        "lv\n",
+                        usize_to_superscript(self.level),
+                        "score\n",
+                        usize_to_superscript(self.score),
+                        "lines\n",
+                        format!(
+                            "{}⁄{}",
+                            usize_to_superscript(self.lines),
+                            usize_to_superscript(self.level * 5)
+                        ),
+                        "time\n",
+                        format_instant(&self.time),
+                    ])
+                    .right_aligned(),
+                    metrics_area,
+                );
 
-        #[cfg(debug_assertions)]
-        {
-            frame.render_widget(
-                text![
-                    "[debug]\n",
-                    format!("fps: {}\n", self.fps),
-                    format!("fall_speed: {}", self.fall_speed.as_secs_f32()),
-                ]
-                .left_aligned(),
-                metrics_area.offset(Offset::new(3, 0)),
-            );
-        }
+                #[cfg(debug_assertions)]
+                {
+                    frame.render_widget(
+                        text![
+                            "[debug]\n",
+                            format!("fps: {}\n", self.fps),
+                            format!("fall_speed: {}", self.fall_speed.as_secs_f32()),
+                        ]
+                        .left_aligned(),
+                        metrics_area.offset(Offset::new(3, 0)),
+                    );
+                }
 
-        frame.render_widget(
-            Paragraph::new("hold")
-                .block(Block::default())
-                .right_aligned(),
-            hold_area,
-        );
-        frame.render_widget(
-            Paragraph::new("next")
-                .block(Block::default())
-                .left_aligned(),
-            next_blocks_area,
-        );
+                frame.render_widget(
+                    Paragraph::new("hold")
+                        .block(Block::default())
+                        .right_aligned(),
+                    hold_area,
+                );
+                frame.render_widget(
+                    Paragraph::new("next")
+                        .block(Block::default())
+                        .left_aligned(),
+                    next_blocks_area,
+                );
+            })
+            .expect("Draw error");
     }
 
     fn update_fall_speed(&mut self) {

@@ -184,8 +184,9 @@ impl Board {
             },
         );
 
-        let max_row_len = (y_axis_min_max_coords.1 - y_axis_min_max_coords.0) + 1;
-        let max_column_len = (x_axis_min_max_coords.1 - x_axis_min_max_coords.0) + 1;
+        let max_row_len = (y_axis_min_max_coords.1 as usize - y_axis_min_max_coords.0 as usize) + 1;
+        let max_column_len =
+            (x_axis_min_max_coords.1 as usize - x_axis_min_max_coords.0 as usize) + 1;
         let matrix_len = max(max_row_len, max_column_len) as usize;
 
         let mut matrix: Vec<Vec<bool>> = vec![vec![false; matrix_len]; matrix_len];

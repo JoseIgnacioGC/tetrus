@@ -1,23 +1,8 @@
+use crate::{blocks, blocks_manager::BlocksManager, board::Board};
+use ratatui::DefaultTerminal;
 use std::{
     io,
     time::{Duration, Instant},
-};
-
-use crossterm::event::{self, KeyCode};
-use ratatui::{
-    layout::Offset,
-    macros::{constraint, horizontal, line, text, vertical},
-    style::Stylize,
-    text::Line,
-    widgets::{Block, Paragraph},
-    DefaultTerminal,
-};
-
-use crate::{
-    blocks,
-    blocks_manager::BlocksManager,
-    board::Board,
-    utils::{integer_format::usize_to_superscript, time::format_instant},
 };
 
 const COLUMNS: u16 = 10;
@@ -25,8 +10,6 @@ const ROWS: u16 = 22;
 
 // TODO: refactor code following this style: https://github.com/ratatui/ratatui/blob/main/examples/apps/colors-rgb/src/main.rs#L69
 pub struct Game {
-    title: Line<'static>,
-
     time: Instant,
     fall_speed: Duration,
     score: usize,
@@ -37,18 +20,7 @@ pub struct Game {
 
 impl Game {
     pub fn new() -> Self {
-        let title = line![
-            "T".red(),
-            "E".fg(blocks::ORANGE),
-            "T".yellow(),
-            "R".green(),
-            "U".cyan(),
-            "S".magenta(),
-        ]
-        .centered();
-
         Self {
-            title,
             time: Instant::now(),
             fall_speed: Duration::ZERO,
             level: 1,
@@ -86,8 +58,9 @@ impl Game {
 
             self.update_fall_speed();
 
-            while event::poll(Duration::ZERO)? {
-                if let Some(event) = event::read().map_or(None, |e| e.as_key_press_event()) {
+            use crossterm::event::{poll, read, KeyCode};
+            while poll(Duration::ZERO)? {
+                if let Some(event) = read().map_or(None, |e| e.as_key_press_event()) {
                     match event.code {
                         KeyCode::Left | KeyCode::Right => board.move_block_x_axis(event.code),
                         KeyCode::Down => {
@@ -128,6 +101,14 @@ impl Game {
     }
 
     fn draw(&mut self, terminal: &mut DefaultTerminal, board: &mut Board) {
+        use crate::utils::{integer_format::usize_to_superscript, time::format_instant};
+        use ratatui::{
+            layout::Offset,
+            macros::{constraint, horizontal, line, text, vertical},
+            style::Stylize,
+            widgets::{Block, Paragraph},
+        };
+
         terminal
             .draw(|frame| {
                 let [title_area, game_area] = vertical![== 3,== ROWS].areas(frame.area());
@@ -136,7 +117,15 @@ impl Game {
                 let [hold_area, metrics_area] = vertical![== 100%, == 8].areas(left_area);
 
                 frame.render_widget(
-                    &self.title,
+                    line![
+                        "T".red(),
+                        "E".fg(blocks::ORANGE),
+                        "T".yellow(),
+                        "R".green(),
+                        "U".cyan(),
+                        "S".magenta(),
+                    ]
+                    .centered(),
                     title_area.centered_vertically(constraint!(== 1)),
                 );
 

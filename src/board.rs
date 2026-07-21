@@ -38,6 +38,10 @@ impl Board {
     }
 
     pub fn rotate_block(&mut self, key: KeyCode) -> bool {
+        if self.block_coordinates.is_empty() {
+            return false;
+        }
+
         let rotated_block: HashSet<Coords> = self.rotate_block_coordinates(key);
 
         if rotated_block.len() != self.block_coordinates.len()
@@ -169,6 +173,10 @@ impl Board {
 
     // TODO: Improve blocks rotation behavior
     fn rotate_block_coordinates(&self, key: KeyCode) -> HashSet<Coords> {
+        if self.block_coordinates.is_empty() {
+            return HashSet::new();
+        }
+
         let mut block_color: Option<Color> = None;
         let (y_axis_min_max_coords, x_axis_min_max_coords) = self.block_coordinates.iter().fold(
             ((u16::MAX, 0), (u16::MAX, 0)),

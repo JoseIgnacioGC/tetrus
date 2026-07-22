@@ -15,7 +15,7 @@ pub struct Game {
     time: Instant,
     fps: usize,
 
-    metrics_winget: MetricsWidget,
+    metrics_widget: MetricsWidget,
 }
 mod metrics_widget;
 
@@ -24,7 +24,7 @@ impl Game {
         Self {
             time: Instant::now(),
             fps: 60,
-            metrics_winget: MetricsWidget::new(),
+            metrics_widget: MetricsWidget::new(),
         }
     }
 
@@ -122,8 +122,8 @@ impl Game {
                     title_area.centered_vertically(constraint!(== 1)),
                 );
 
-                self.metrics_winget.copy_metrics(board, &self.time);
-                frame.render_widget(&mut self.metrics_winget, metrics_area);
+                self.metrics_widget.copy_metrics(board, &self.time);
+                frame.render_widget(&mut self.metrics_widget, metrics_area);
 
                 #[cfg(debug_assertions)]
                 frame.render_widget(

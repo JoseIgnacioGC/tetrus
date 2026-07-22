@@ -1,6 +1,11 @@
 mod board_widget;
 mod metrics_widget;
 
+#[cfg(debug_assertions)]
+mod debug_widget;
+
+#[cfg(debug_assertions)]
+use crate::tui::debug_widget::DebugWidget;
 use crate::{
     blocks,
     tui::{
@@ -11,57 +16,36 @@ use crate::{
         metrics_widget::MetricsWidget,
     },
 };
-#[cfg(debug_assertions)]
-use ratatui::macros::span;
 use ratatui::DefaultTerminal;
-use std::{
-    io,
-    time::{Duration, Instant},
-};
+use std::{io, time::Instant};
 
 const COLUMNS: u16 = 10;
 const ROWS: u16 = 22;
-
 pub struct Game {
     time: Instant,
-    fps: usize,
 
     metrics_widget: MetricsWidget,
     board_widget: BoardWidget,
+
+    #[cfg(debug_assertions)]
+    debug_widget: DebugWidget,
 }
 
+// TODO: fix fps drop to 52 after widgets refactor
 impl Game {
     pub fn new() -> Self {
         Self {
             time: Instant::now(),
-            fps: 60,
             metrics_widget: MetricsWidget::new(),
             board_widget: BoardWidget::new(),
+
+            #[cfg(debug_assertions)]
+            debug_widget: DebugWidget::new(),
         }
     }
 
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
-        let tick_60fps_interval: Duration = Duration::from_secs_f32(1.0 / 60.0);
-
-        let mut last_tick = Instant::now();
-        let mut acc_time = Duration::ZERO;
-
-        let mut last_fps_count = Instant::now();
-        let mut fps_counter = 0;
-
         loop {
-            let current_time = Instant::now();
-            let delta_time = current_time.duration_since(last_tick);
-            last_tick = current_time;
-            acc_time += delta_time;
-
-            fps_counter += 1;
-            if current_time.duration_since(last_fps_count) >= Duration::from_secs(1) {
-                self.fps = fps_counter;
-                fps_counter = 0;
-                last_fps_count = current_time;
-            }
-
             match self.board_widget.run()? {
                 Brake => break,
                 Continue => continue,
@@ -69,11 +53,6 @@ impl Game {
             };
 
             self.draw(terminal);
-
-            let elapsed = current_time.elapsed();
-            if elapsed < tick_60fps_interval {
-                std::thread::sleep(tick_60fps_interval - elapsed);
-            }
         }
 
         ratatui::restore();
@@ -82,7 +61,7 @@ impl Game {
 
     fn draw(&mut self, terminal: &mut DefaultTerminal) {
         use ratatui::{
-            macros::{constraint, horizontal, line, text, vertical},
+            macros::{constraint, horizontal, line, vertical},
             style::Stylize,
             widgets::{Block, Paragraph},
         };
@@ -112,18 +91,10 @@ impl Game {
                 frame.render_widget(&self.metrics_widget, metrics_area);
 
                 #[cfg(debug_assertions)]
-                frame.render_widget(
-                    text![
-                        "[debug]",
-                        span!("fps: {}", self.fps),
-                        span!(
-                            "fall_speed: {}",
-                            self.board_widget.board.fall_speed.as_secs_f32()
-                        ),
-                    ]
-                    .left_aligned(),
-                    metrics_area.offset(ratatui::layout::Offset::new(3, 0)),
-                );
+                {
+                    self.debug_widget.copy_metrics(&self.board_widget.board);
+                    frame.render_widget(&mut self.debug_widget, metrics_area);
+                }
 
                 frame.render_widget(&mut self.board_widget, board_area);
 

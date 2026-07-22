@@ -1,7 +1,14 @@
 mod metrics_widget;
 
 use crate::{
-    blocks, blocks_manager::BlocksManager, board::Board, tui::metrics_widget::MetricsWidget,
+    blocks,
+    tui::{
+        board_widget::{
+            BoardState::{Brake, Continue, Pass},
+            BoardWidget,
+        },
+        metrics_widget::MetricsWidget,
+    },
 };
 #[cfg(debug_assertions)]
 use ratatui::macros::span;
@@ -14,12 +21,12 @@ use std::{
 const COLUMNS: u16 = 10;
 const ROWS: u16 = 22;
 
-// TODO: refactor code following this style: https://github.com/ratatui/ratatui/blob/main/examples/apps/colors-rgb/src/main.rs#L69
 pub struct Game {
     time: Instant,
     fps: usize,
 
     metrics_widget: MetricsWidget,
+    board_widget: BoardWidget,
 }
 
 impl Game {
@@ -28,14 +35,12 @@ impl Game {
             time: Instant::now(),
             fps: 60,
             metrics_widget: MetricsWidget::new(),
+            board_widget: BoardWidget::new(),
         }
     }
 
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
         let tick_60fps_interval: Duration = Duration::from_secs_f32(1.0 / 60.0);
-
-        let mut board = Board::new(COLUMNS, ROWS);
-        let mut blocks_manager = BlocksManager::new();
 
         let mut last_tick = Instant::now();
         let mut acc_time = Duration::ZERO;
@@ -56,37 +61,13 @@ impl Game {
                 last_fps_count = current_time;
             }
 
-            use crossterm::event::{poll, read, KeyCode};
-            while poll(Duration::ZERO)? {
-                if let Some(event) = read().map_or(None, |e| e.as_key_press_event()) {
-                    match event.code {
-                        KeyCode::Left | KeyCode::Right => board.move_block_x_axis(event.code),
-                        KeyCode::Down => {
-                            let _ = board.move_block_down_or_set();
-                        }
-                        KeyCode::Char('z') | KeyCode::Char('x') => {
-                            let _ = board.rotate_block(event.code);
-                        }
-                        KeyCode::Char(' ') => while board.move_block_down_or_set() {},
-                        KeyCode::Esc => return Ok(()),
-                        _ => (),
-                    }
-                }
-            }
+            match self.board_widget.run()? {
+                Brake => break,
+                Continue => continue,
+                Pass => (),
+            };
 
-            if !board.is_block_falling {
-                let block = blocks_manager.get_next_block();
-                if !board.spawn_next_block(block) {
-                    break;
-                };
-            }
-
-            while acc_time >= board.fall_speed {
-                acc_time -= board.fall_speed;
-                let _ = board.move_block_down_or_set();
-            }
-
-            self.draw(terminal, &mut board);
+            self.draw(terminal);
 
             let elapsed = current_time.elapsed();
             if elapsed < tick_60fps_interval {
@@ -98,7 +79,7 @@ impl Game {
         Ok(())
     }
 
-    fn draw(&mut self, terminal: &mut DefaultTerminal, board: &mut Board) {
+    fn draw(&mut self, terminal: &mut DefaultTerminal) {
         use ratatui::{
             macros::{constraint, horizontal, line, text, vertical},
             style::Stylize,
@@ -110,7 +91,7 @@ impl Game {
                 let [title_area, game_area] = vertical![== 3,== ROWS].areas(frame.area());
                 let [left_area, board_area, next_blocks_area] =
                     horizontal![*= 1, == COLUMNS * 2 + 3, *= 1].areas(game_area);
-                let [hold_area, metrics_area] = vertical![== 100%, == 8].areas(left_area);
+                let [hold_area, metrics_area] = vertical![*= 1, == 8].areas(left_area);
 
                 frame.render_widget(
                     line![
@@ -125,7 +106,8 @@ impl Game {
                     title_area.centered_vertically(constraint!(== 1)),
                 );
 
-                self.metrics_widget.copy_metrics(board, &self.time);
+                self.metrics_widget
+                    .copy_metrics(&self.board_widget.board, &self.time);
                 frame.render_widget(&self.metrics_widget, metrics_area);
 
                 #[cfg(debug_assertions)]
@@ -133,13 +115,16 @@ impl Game {
                     text![
                         "[debug]",
                         span!("fps: {}", self.fps),
-                        span!("fall_speed: {}", board.fall_speed.as_secs_f32()),
+                        span!(
+                            "fall_speed: {}",
+                            self.board_widget.board.fall_speed.as_secs_f32()
+                        ),
                     ]
                     .left_aligned(),
                     metrics_area.offset(ratatui::layout::Offset::new(3, 0)),
                 );
 
-                frame.render_widget(board, board_area);
+                frame.render_widget(&mut self.board_widget, board_area);
 
                 frame.render_widget(
                     Paragraph::new("hold")
@@ -155,5 +140,104 @@ impl Game {
                 );
             })
             .expect("Draw error");
+    }
+}
+
+mod board_widget {
+    use std::{
+        io,
+        time::{Duration, Instant},
+    };
+
+    use ratatui::{buffer::Buffer, layout::Rect, widgets::Widget};
+
+    use crate::{
+        blocks_manager::BlocksManager,
+        board::Board,
+        tui::{COLUMNS, ROWS},
+    };
+
+    #[derive(Default, PartialEq, Eq)]
+    pub enum BoardState {
+        #[default]
+        Pass,
+        Continue,
+        Brake,
+    }
+
+    pub struct BoardWidget {
+        pub board: Board,
+
+        tick_interval: Duration,
+        blocks_manager: BlocksManager,
+        last_tick: Instant,
+        acc_time: Duration,
+    }
+
+    impl BoardWidget {
+        pub fn new() -> Self {
+            let tick_60fps_interval: Duration = Duration::from_secs_f32(1.0 / 60.0);
+
+            Self {
+                tick_interval: tick_60fps_interval,
+                board: Board::new(COLUMNS, ROWS),
+                blocks_manager: BlocksManager::new(),
+                last_tick: Instant::now(),
+                acc_time: Duration::ZERO,
+            }
+        }
+
+        pub fn run(&mut self) -> io::Result<BoardState> {
+            use crossterm::event::{poll, read, KeyCode};
+
+            let current_time = Instant::now();
+            let delta_time = current_time.duration_since(self.last_tick);
+            self.last_tick = current_time;
+            self.acc_time += delta_time;
+
+            while poll(Duration::ZERO)? {
+                if let Some(event) = read().map_or(None, |e| e.as_key_press_event()) {
+                    match event.code {
+                        KeyCode::Left | KeyCode::Right => self.board.move_block_x_axis(event.code),
+                        KeyCode::Down => {
+                            let _ = self.board.move_block_down_or_set();
+                        }
+                        KeyCode::Char('z') | KeyCode::Char('x') => {
+                            let _ = self.board.rotate_block(event.code);
+                        }
+                        KeyCode::Char(' ') => while self.board.move_block_down_or_set() {},
+                        KeyCode::Esc => {
+                            return Ok(BoardState::Brake);
+                        }
+                        _ => (),
+                    }
+                }
+            }
+
+            if !self.board.is_block_falling {
+                let block = self.blocks_manager.get_next_block();
+                if !self.board.spawn_next_block(block) {
+                    return Ok(BoardState::Brake);
+                };
+            }
+
+            while self.acc_time >= self.board.fall_speed {
+                self.acc_time -= self.board.fall_speed;
+                let _ = self.board.move_block_down_or_set();
+            }
+
+            let elapsed = current_time.elapsed();
+            if elapsed < self.tick_interval {
+                std::thread::sleep(self.tick_interval - elapsed);
+            };
+
+            Ok(BoardState::Pass)
+        }
+    }
+
+    impl Widget for &mut BoardWidget {
+        fn render(self, area: Rect, buf: &mut Buffer) {
+            self.board.render(area, buf);
+        }
     }
 }

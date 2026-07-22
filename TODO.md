@@ -12,7 +12,8 @@
 
 
 # Maybe
-- [ ] Implement better score system (t-spin, etc.)
+- [ ] Implement better score system (t-spin, clear, etc.)
 - [ ] Improve the visual display of "combo name" messages using custom pixel rendering
+- [ ] Implement "delay frames"
 
 

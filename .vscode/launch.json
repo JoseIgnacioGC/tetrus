@@ -7,15 +7,11 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'tetris'",
+            "name": "Debug executable 'tetrus'",
             "cargo": {
-                "args": [
-                    "build",
-                    "--bin=tetris",
-                    "--package=tetris"
-                ],
+                "args": ["build", "--bin=tetrus", "--package=tetrus"],
                 "filter": {
-                    "name": "tetris",
+                    "name": "tetrus",
                     "kind": "bin"
                 }
             },
@@ -25,16 +21,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'tetris'",
+            "name": "Debug unit tests in executable 'tetrus'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=tetris",
-                    "--package=tetris"
+                    "--bin=tetrus",
+                    "--package=tetrus"
                 ],
                 "filter": {
-                    "name": "tetris",
+                    "name": "tetrus",
                     "kind": "bin"
                 }
             },

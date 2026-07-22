@@ -1378,7 +1378,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "tetris"
+name = "tetrus"
 version = "0.1.0"
 dependencies = [
  "crossterm",

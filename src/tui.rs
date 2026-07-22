@@ -7,13 +7,15 @@ use std::{
 
 const COLUMNS: u16 = 10;
 const ROWS: u16 = 22;
+const GOAL_MULTIPLIER: usize = 5;
+const MAX_FALL_SPEED: usize = 20;
 
 // TODO: refactor code following this style: https://github.com/ratatui/ratatui/blob/main/examples/apps/colors-rgb/src/main.rs#L69
 pub struct Game {
     time: Instant,
     fall_speed: Duration,
     score: usize,
-    lines: usize,
+    cleared_lines: usize,
     level: usize,
     fps: usize,
 }
@@ -24,7 +26,7 @@ impl Game {
             time: Instant::now(),
             fall_speed: Duration::ZERO,
             level: 1,
-            lines: 0,
+            cleared_lines: 0,
             score: 0,
             fps: 60,
         }
@@ -56,7 +58,7 @@ impl Game {
                 last_fps_count = current_time;
             }
 
-            self.update_fall_speed();
+            self.update_metrics();
 
             use crossterm::event::{poll, read, KeyCode};
             while poll(Duration::ZERO)? {
@@ -109,13 +111,15 @@ impl Game {
             widgets::{Block, Paragraph},
         };
 
+        self.update_metrics();
+
         terminal
             .draw(|frame| {
                 let [title_area, game_area] = vertical![== 3,== ROWS].areas(frame.area());
                 let [left_area, board_area, next_blocks_area] =
                     horizontal![*= 1, == COLUMNS * 2 + 3, *= 1].areas(game_area);
                 let [hold_area, metrics_area] = vertical![== 100%, == 8].areas(left_area);
-                self.lines = board.cleaned_lines;
+                self.cleared_lines = board.cleaned_lines;
 
                 frame.render_widget(
                     line![
@@ -140,8 +144,8 @@ impl Game {
                         "lines\n",
                         format!(
                             "{}⁄{}",
-                            usize_to_superscript(self.lines),
-                            usize_to_superscript(self.level * 5)
+                            usize_to_superscript(self.cleared_lines),
+                            usize_to_superscript(self.level * GOAL_MULTIPLIER)
                         ),
                         "time\n",
                         format_instant(&self.time),
@@ -179,8 +183,14 @@ impl Game {
             .expect("Draw error");
     }
 
+    fn update_level(&mut self) {
+        let curr_goal = self.level * GOAL_MULTIPLIER;
+        if self.cleared_lines >= curr_goal {
+            self.level += 1;
+        }
+    }
+
     fn update_fall_speed(&mut self) {
-        const MAX_FALL_SPEED: usize = 20;
         if self.level > MAX_FALL_SPEED {
             return;
         }
@@ -188,5 +198,10 @@ impl Game {
         self.fall_speed = Duration::from_secs_f32(
             (0.8 - ((self.level as f32 - 1.0) * 0.007)).powf(self.level as f32 - 1.0),
         )
+    }
+
+    fn update_metrics(&mut self) {
+        self.update_level();
+        self.update_fall_speed();
     }
 }

@@ -1,7 +1,5 @@
 use crate::{
-    blocks,
-    blocks_manager::BlocksManager,
-    board::{Board, GOAL_MULTIPLIER},
+    blocks, blocks_manager::BlocksManager, board::Board, tui::metrics_widget::MetricsWidget,
 };
 use ratatui::DefaultTerminal;
 use std::{
@@ -16,13 +14,17 @@ const ROWS: u16 = 22;
 pub struct Game {
     time: Instant,
     fps: usize,
+
+    metrics_winget: MetricsWidget,
 }
+mod metrics_widget;
 
 impl Game {
     pub fn new() -> Self {
         Self {
             time: Instant::now(),
             fps: 60,
+            metrics_winget: MetricsWidget::new(),
         }
     }
 
@@ -94,7 +96,6 @@ impl Game {
     }
 
     fn draw(&mut self, terminal: &mut DefaultTerminal, board: &mut Board) {
-        use crate::utils::{integer_format::usize_to_superscript, time::format_instant};
         use ratatui::{
             macros::{constraint, horizontal, line, text, vertical},
             style::Stylize,
@@ -106,7 +107,7 @@ impl Game {
                 let [title_area, game_area] = vertical![== 3,== ROWS].areas(frame.area());
                 let [left_area, board_area, next_blocks_area] =
                     horizontal![*= 1, == COLUMNS * 2 + 3, *= 1].areas(game_area);
-                let [hold_area, metrics_area] = vertical![== 100%, == 8].areas(left_area);
+                let [hold_area, metrics_area] = vertical![== 100%, == 10].areas(left_area);
 
                 frame.render_widget(
                     line![
@@ -121,25 +122,8 @@ impl Game {
                     title_area.centered_vertically(constraint!(== 1)),
                 );
 
-                // TODO: create a widget for metrics that borrows board
-                frame.render_widget(
-                    Paragraph::new(text![
-                        "lv\n",
-                        usize_to_superscript(board.level),
-                        "score\n",
-                        usize_to_superscript(board.score),
-                        "lines\n",
-                        format!(
-                            "{}⁄{}",
-                            usize_to_superscript(board.cleaned_lines),
-                            usize_to_superscript(board.level * GOAL_MULTIPLIER)
-                        ),
-                        "time\n",
-                        format_instant(&self.time),
-                    ])
-                    .right_aligned(),
-                    metrics_area,
-                );
+                self.metrics_winget.copy_metrics(board, &self.time);
+                frame.render_widget(&mut self.metrics_winget, metrics_area);
 
                 #[cfg(debug_assertions)]
                 frame.render_widget(

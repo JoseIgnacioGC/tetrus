@@ -115,6 +115,7 @@ impl Game {
                 let [left_area, board_area, next_blocks_area] =
                     horizontal![*= 1, == COLUMNS * 2 + 3, *= 1].areas(game_area);
                 let [hold_area, metrics_area] = vertical![== 100%, == 8].areas(left_area);
+                self.lines = board.cleaned_lines;
 
                 frame.render_widget(
                     line![

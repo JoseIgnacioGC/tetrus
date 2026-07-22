@@ -150,6 +150,7 @@ impl Board {
             .filter(|coords| {
                 if coords.len() as u16 == self.columns_len {
                     self.coordinates.retain(|c| !coords.contains(c));
+                    self.cleaned_lines += 1;
                     return false;
                 }
                 !coords.is_empty()

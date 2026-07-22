@@ -1,4 +1,8 @@
-use crate::{blocks, blocks_manager::BlocksManager, board::Board};
+use crate::{
+    blocks,
+    blocks_manager::BlocksManager,
+    board::{Board, GOAL_MULTIPLIER},
+};
 use ratatui::DefaultTerminal;
 use std::{
     io,
@@ -7,16 +11,10 @@ use std::{
 
 const COLUMNS: u16 = 10;
 const ROWS: u16 = 22;
-const GOAL_MULTIPLIER: usize = 5;
-const MAX_FALL_SPEED: usize = 20;
 
 // TODO: refactor code following this style: https://github.com/ratatui/ratatui/blob/main/examples/apps/colors-rgb/src/main.rs#L69
 pub struct Game {
     time: Instant,
-    fall_speed: Duration,
-    score: usize,
-    cleared_lines: usize,
-    level: usize,
     fps: usize,
 }
 
@@ -24,10 +22,6 @@ impl Game {
     pub fn new() -> Self {
         Self {
             time: Instant::now(),
-            fall_speed: Duration::ZERO,
-            level: 1,
-            cleared_lines: 0,
-            score: 0,
             fps: 60,
         }
     }
@@ -48,7 +42,6 @@ impl Game {
             let current_time = Instant::now();
             let delta_time = current_time.duration_since(last_tick);
             last_tick = current_time;
-
             acc_time += delta_time;
 
             fps_counter += 1;
@@ -57,8 +50,6 @@ impl Game {
                 fps_counter = 0;
                 last_fps_count = current_time;
             }
-
-            self.update_metrics();
 
             use crossterm::event::{poll, read, KeyCode};
             while poll(Duration::ZERO)? {
@@ -80,13 +71,13 @@ impl Game {
 
             if !board.is_block_falling {
                 let block = blocks_manager.get_next_block();
-                if !board.insert_block(block) {
+                if !board.spawn_next_block(block) {
                     break;
                 };
             }
 
-            while acc_time >= self.fall_speed {
-                acc_time -= self.fall_speed;
+            while acc_time >= board.fall_speed {
+                acc_time -= board.fall_speed;
                 let _ = board.move_block_down_or_set();
             }
 
@@ -105,13 +96,10 @@ impl Game {
     fn draw(&mut self, terminal: &mut DefaultTerminal, board: &mut Board) {
         use crate::utils::{integer_format::usize_to_superscript, time::format_instant};
         use ratatui::{
-            layout::Offset,
             macros::{constraint, horizontal, line, text, vertical},
             style::Stylize,
             widgets::{Block, Paragraph},
         };
-
-        self.update_metrics();
 
         terminal
             .draw(|frame| {
@@ -119,7 +107,6 @@ impl Game {
                 let [left_area, board_area, next_blocks_area] =
                     horizontal![*= 1, == COLUMNS * 2 + 3, *= 1].areas(game_area);
                 let [hold_area, metrics_area] = vertical![== 100%, == 8].areas(left_area);
-                self.cleared_lines = board.cleaned_lines;
 
                 frame.render_widget(
                     line![
@@ -134,18 +121,18 @@ impl Game {
                     title_area.centered_vertically(constraint!(== 1)),
                 );
 
-                frame.render_widget(board, board_area);
+                // TODO: create a widget for metrics that borrows board
                 frame.render_widget(
                     Paragraph::new(text![
                         "lv\n",
-                        usize_to_superscript(self.level),
+                        usize_to_superscript(board.level),
                         "score\n",
-                        usize_to_superscript(self.score),
+                        usize_to_superscript(board.score),
                         "lines\n",
                         format!(
                             "{}⁄{}",
-                            usize_to_superscript(self.cleared_lines),
-                            usize_to_superscript(self.level * GOAL_MULTIPLIER)
+                            usize_to_superscript(board.cleaned_lines),
+                            usize_to_superscript(board.level * GOAL_MULTIPLIER)
                         ),
                         "time\n",
                         format_instant(&self.time),
@@ -155,17 +142,17 @@ impl Game {
                 );
 
                 #[cfg(debug_assertions)]
-                {
-                    frame.render_widget(
-                        text![
-                            "[debug]\n",
-                            format!("fps: {}\n", self.fps),
-                            format!("fall_speed: {}", self.fall_speed.as_secs_f32()),
-                        ]
-                        .left_aligned(),
-                        metrics_area.offset(Offset::new(3, 0)),
-                    );
-                }
+                frame.render_widget(
+                    text![
+                        "[debug]\n",
+                        format!("fps: {}\n", self.fps),
+                        format!("fall_speed: {}", board.fall_speed.as_secs_f32()),
+                    ]
+                    .left_aligned(),
+                    metrics_area.offset(ratatui::layout::Offset::new(3, 0)),
+                );
+
+                frame.render_widget(board, board_area);
 
                 frame.render_widget(
                     Paragraph::new("hold")
@@ -181,27 +168,5 @@ impl Game {
                 );
             })
             .expect("Draw error");
-    }
-
-    fn update_level(&mut self) {
-        let curr_goal = self.level * GOAL_MULTIPLIER;
-        if self.cleared_lines >= curr_goal {
-            self.level += 1;
-        }
-    }
-
-    fn update_fall_speed(&mut self) {
-        if self.level > MAX_FALL_SPEED {
-            return;
-        }
-
-        self.fall_speed = Duration::from_secs_f32(
-            (0.8 - ((self.level as f32 - 1.0) * 0.007)).powf(self.level as f32 - 1.0),
-        )
-    }
-
-    fn update_metrics(&mut self) {
-        self.update_level();
-        self.update_fall_speed();
     }
 }

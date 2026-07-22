@@ -11,7 +11,19 @@ use ratatui::{
 use std::{
     cmp::{max, min},
     collections::HashSet,
+    time::Duration,
 };
+
+pub const GOAL_MULTIPLIER: usize = 5;
+pub const MOVEMENT_SETS: [(&str, usize); 5] = [
+    ("", 0),
+    ("single", 100),
+    ("double", 300),
+    ("triple", 500),
+    ("quad", 800),
+];
+
+const MAX_FALL_SPEED: usize = 20;
 
 pub type Coords = (u16, u16, Color);
 
@@ -19,6 +31,9 @@ pub type Coords = (u16, u16, Color);
 pub struct Board {
     pub is_block_falling: bool,
     pub cleaned_lines: usize,
+    pub score: usize,
+    pub level: usize,
+    pub fall_speed: Duration,
 
     columns_len: u16,
     rows_len: u16,
@@ -33,6 +48,7 @@ impl Board {
             columns_len,
             rows_len,
             board: vec![vec![Span::raw(""); columns_len as usize]; rows_len as usize],
+            level: 1,
             ..Default::default()
         }
     }
@@ -54,11 +70,11 @@ impl Board {
         true
     }
 
-    pub fn insert_block(&mut self, block: &Block) -> bool {
+    pub fn spawn_next_block(&mut self, block: &Block) -> bool {
         let center_coordinates_x =
             self.columns_len / 2 - block.get_columns_len() / 2 - (block.get_columns_len() % 2);
-        let block_coordinates = block.get_coordinates();
-        let block_coordinates = block_coordinates
+        let block_coordinates = block
+            .get_coordinates()
             .iter()
             .map(|(x, y, color)| (x + center_coordinates_x, *y, *color))
             .collect();
@@ -67,8 +83,10 @@ impl Board {
             return false;
         }
 
-        self.block_coordinates = block_coordinates.clone();
+        self.block_coordinates = block_coordinates;
         self.is_block_falling = true;
+
+        self.update_metrics();
 
         true
     }
@@ -145,17 +163,22 @@ impl Board {
                 acc
             },
         );
+
+        let mut cleaned_lines_counter = 0;
         let uncompleted_columns: Vec<&HashSet<Coords>> = shorted_coords
             .iter()
             .filter(|coords| {
                 if coords.len() as u16 == self.columns_len {
                     self.coordinates.retain(|c| !coords.contains(c));
-                    self.cleaned_lines += 1;
+                    cleaned_lines_counter += 1;
                     return false;
                 }
                 !coords.is_empty()
             })
             .collect();
+
+        self.score += MOVEMENT_SETS[cleaned_lines_counter].1 * self.level;
+        self.cleaned_lines += cleaned_lines_counter;
 
         let shifted_coords = uncompleted_columns.iter().rev().enumerate().fold(
             HashSet::new(),
@@ -239,6 +262,28 @@ impl Board {
         });
 
         rotated_block
+    }
+
+    fn update_level(&mut self) {
+        let curr_goal = self.level * GOAL_MULTIPLIER;
+        if self.cleaned_lines >= curr_goal {
+            self.level += 1;
+        }
+    }
+
+    fn update_fall_speed(&mut self) {
+        if self.level > MAX_FALL_SPEED {
+            return;
+        }
+
+        self.fall_speed = Duration::from_secs_f32(
+            (0.8 - ((self.level as f32 - 1.0) * 0.007)).powf(self.level as f32 - 1.0),
+        )
+    }
+
+    fn update_metrics(&mut self) {
+        self.update_level();
+        self.update_fall_speed();
     }
 }
 

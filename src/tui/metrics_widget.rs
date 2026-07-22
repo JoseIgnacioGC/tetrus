@@ -1,12 +1,12 @@
 use crate::{
     board::{Board, GOAL_MULTIPLIER},
-    utils::integer_format::usize_to_superscript,
+    utils::integer_format::{to_superscript, to_superscript_with_separator},
 };
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
-    macros::text,
-    widgets::{Paragraph, Widget},
+    macros::{line, span, text},
+    widgets::Widget,
 };
 use std::fmt::Write;
 use std::time::Instant;
@@ -53,23 +53,22 @@ impl MetricsWidget {
     }
 }
 
-impl Widget for &mut MetricsWidget {
-    // TODO: write to the buffer instead of creating a paragraph
+impl Widget for &MetricsWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        Paragraph::new(text![
-            "lv\n",
-            usize_to_superscript(self.level),
-            "score\n",
-            usize_to_superscript(self.score),
-            "lines\n",
-            format!(
+        text![
+            "lv",
+            to_superscript(self.level),
+            "score",
+            to_superscript_with_separator(self.score),
+            "lines",
+            line![span!(
                 "{}⁄{}",
-                usize_to_superscript(self.cleaned_lines),
-                usize_to_superscript(self.level * GOAL_MULTIPLIER)
-            ),
-            "time\n",
-            self.time.clone(),
-        ])
+                to_superscript(self.cleaned_lines),
+                to_superscript(self.level * GOAL_MULTIPLIER)
+            )],
+            "time",
+            self.time.as_str(),
+        ]
         .right_aligned()
         .render(area, buf);
     }

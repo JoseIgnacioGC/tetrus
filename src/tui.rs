@@ -1,6 +1,10 @@
+mod metrics_widget;
+
 use crate::{
     blocks, blocks_manager::BlocksManager, board::Board, tui::metrics_widget::MetricsWidget,
 };
+#[cfg(debug_assertions)]
+use ratatui::macros::span;
 use ratatui::DefaultTerminal;
 use std::{
     io,
@@ -17,7 +21,6 @@ pub struct Game {
 
     metrics_widget: MetricsWidget,
 }
-mod metrics_widget;
 
 impl Game {
     pub fn new() -> Self {
@@ -107,7 +110,7 @@ impl Game {
                 let [title_area, game_area] = vertical![== 3,== ROWS].areas(frame.area());
                 let [left_area, board_area, next_blocks_area] =
                     horizontal![*= 1, == COLUMNS * 2 + 3, *= 1].areas(game_area);
-                let [hold_area, metrics_area] = vertical![== 100%, == 10].areas(left_area);
+                let [hold_area, metrics_area] = vertical![== 100%, == 8].areas(left_area);
 
                 frame.render_widget(
                     line![
@@ -123,14 +126,14 @@ impl Game {
                 );
 
                 self.metrics_widget.copy_metrics(board, &self.time);
-                frame.render_widget(&mut self.metrics_widget, metrics_area);
+                frame.render_widget(&self.metrics_widget, metrics_area);
 
                 #[cfg(debug_assertions)]
                 frame.render_widget(
                     text![
-                        "[debug]\n",
-                        format!("fps: {}\n", self.fps),
-                        format!("fall_speed: {}", board.fall_speed.as_secs_f32()),
+                        "[debug]",
+                        span!("fps: {}", self.fps),
+                        span!("fall_speed: {}", board.fall_speed.as_secs_f32()),
                     ]
                     .left_aligned(),
                     metrics_area.offset(ratatui::layout::Offset::new(3, 0)),

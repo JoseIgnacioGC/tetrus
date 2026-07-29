@@ -1,6 +1,6 @@
 mod board_widget;
+mod menu_widget;
 mod metrics_widget;
-mod menu_widget
 
 #[cfg(debug_assertions)]
 mod debug_widget;
@@ -149,4 +149,3 @@ impl<'a> Game<'a> {
         );
     }
 }
-

@@ -1,5 +1,6 @@
 mod board_widget;
 mod metrics_widget;
+mod menu_widget
 
 #[cfg(debug_assertions)]
 mod debug_widget;
@@ -9,36 +10,63 @@ use crate::tui::debug_widget::DebugWidget;
 use crate::{
     blocks,
     tui::{
-        board_widget::{
-            BoardState::{Brake, Continue, Pass},
-            BoardWidget,
-        },
+        board_widget::{BoardState, BoardWidget},
+        menu_widget::{MenuState, MenuWidget},
         metrics_widget::MetricsWidget,
     },
 };
-use ratatui::DefaultTerminal;
+use ratatui::{
+    layout::Offset,
+    macros::{constraint, horizontal, line, vertical},
+    style::Stylize,
+    text::Line,
+    widgets::{Block, Paragraph},
+    DefaultTerminal, Frame,
+};
+
 use std::{io, time::Instant};
 
 const COLUMNS: u16 = 10;
 const ROWS: u16 = 22;
-pub struct Game {
-    time: Instant,
 
+enum GameState {
+    Menu,
+    Game,
+    GameOver,
+}
+
+pub struct Game<'a> {
+    title: Line<'a>,
+    time: Instant,
+    game_state: GameState,
+
+    menu_widget: MenuWidget<'a>,
     metrics_widget: MetricsWidget,
     board_widget: BoardWidget,
-
     #[cfg(debug_assertions)]
     debug_widget: DebugWidget,
 }
 
+// TODO: handle events globally
 // TODO: fix fps drop to 52 after widgets refactor
-impl Game {
+impl<'a> Game<'a> {
     pub fn new() -> Self {
         Self {
+            title: line![
+                "T".red(),
+                "E".fg(blocks::ORANGE),
+                "T".yellow(),
+                "R".green(),
+                "U".cyan(),
+                "S".magenta(),
+            ]
+            .centered(),
             time: Instant::now(),
+            game_state: GameState::Menu,
+
+            menu_widget: MenuWidget::new(),
             metrics_widget: MetricsWidget::new(),
             board_widget: BoardWidget::new(),
-
             #[cfg(debug_assertions)]
             debug_widget: DebugWidget::new(),
         }
@@ -46,71 +74,79 @@ impl Game {
 
     pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
         loop {
-            match self.board_widget.run()? {
-                Brake => break,
-                Continue => continue,
-                Pass => (),
+            match self.game_state {
+                GameState::Menu => {
+                    match self.menu_widget.run()? {
+                        MenuState::Brake => break,
+                        MenuState::EnterGame => self.game_state = GameState::Game,
+                        MenuState::Pass => (),
+                    };
+                }
+                GameState::Game => {
+                    match self.board_widget.run()? {
+                        BoardState::Brake => break,
+                        BoardState::Pass => (),
+                    };
+                }
+                GameState::GameOver => {}
             };
 
-            self.draw(terminal);
+            terminal.draw(|frame| {
+                match self.game_state {
+                    GameState::Menu => self.render_menu(frame),
+                    GameState::Game => self.render_game(frame),
+                    GameState::GameOver => self.render_game(frame),
+                };
+            })?;
         }
 
         ratatui::restore();
         Ok(())
     }
 
-    fn draw(&mut self, terminal: &mut DefaultTerminal) {
-        use ratatui::{
-            macros::{constraint, horizontal, line, vertical},
-            style::Stylize,
-            widgets::{Block, Paragraph},
-        };
+    fn render_menu(&mut self, frame: &mut Frame) {
+        let [_, area] = vertical![*=1, *= 1].areas(frame.area());
 
-        terminal
-            .draw(|frame| {
-                let [title_area, game_area] = vertical![== 3,== ROWS].areas(frame.area());
-                let [left_area, board_area, next_blocks_area] =
-                    horizontal![*= 1, == COLUMNS * 2 + 3, *= 1].areas(game_area);
-                let [hold_area, metrics_area] = vertical![*= 1, == 8].areas(left_area);
+        frame.render_widget(&self.title, area.offset(Offset { x: 0, y: -4 }));
 
-                frame.render_widget(
-                    line![
-                        "T".red(),
-                        "E".fg(blocks::ORANGE),
-                        "T".yellow(),
-                        "R".green(),
-                        "U".cyan(),
-                        "S".magenta(),
-                    ]
-                    .centered(),
-                    title_area.centered_vertically(constraint!(== 1)),
-                );
+        frame.render_widget(&mut self.menu_widget, area.offset(Offset { x: 0, y: -2 }));
+    }
 
-                self.metrics_widget
-                    .copy_metrics(&self.board_widget.board, &self.time);
-                frame.render_widget(&self.metrics_widget, metrics_area);
+    fn render_game(&mut self, frame: &mut Frame) {
+        let [title_area, game_area] = vertical![== 3,== ROWS].areas(frame.area());
+        let [left_area, board_area, next_blocks_area] =
+            horizontal![*= 1, == COLUMNS * 2 + 3, *= 1].areas(game_area);
+        let [hold_area, metrics_area] = vertical![*= 1, == 8].areas(left_area);
 
-                #[cfg(debug_assertions)]
-                {
-                    self.debug_widget.copy_metrics(&self.board_widget.board);
-                    frame.render_widget(&mut self.debug_widget, metrics_area);
-                }
+        frame.render_widget(
+            &self.title,
+            title_area.centered_vertically(constraint!(== 1)),
+        );
 
-                frame.render_widget(&mut self.board_widget, board_area);
+        self.metrics_widget
+            .copy_metrics(&self.board_widget.board, &self.time);
+        frame.render_widget(&self.metrics_widget, metrics_area);
 
-                frame.render_widget(
-                    Paragraph::new("hold")
-                        .block(Block::default())
-                        .right_aligned(),
-                    hold_area,
-                );
-                frame.render_widget(
-                    Paragraph::new("next")
-                        .block(Block::default())
-                        .left_aligned(),
-                    next_blocks_area,
-                );
-            })
-            .expect("Draw error");
+        #[cfg(debug_assertions)]
+        {
+            self.debug_widget.copy_metrics(&self.board_widget.board);
+            frame.render_widget(&mut self.debug_widget, metrics_area);
+        }
+
+        frame.render_widget(&mut self.board_widget, board_area);
+
+        frame.render_widget(
+            Paragraph::new("hold")
+                .block(Block::default())
+                .right_aligned(),
+            hold_area,
+        );
+        frame.render_widget(
+            Paragraph::new("next")
+                .block(Block::default())
+                .left_aligned(),
+            next_blocks_area,
+        );
     }
 }
+

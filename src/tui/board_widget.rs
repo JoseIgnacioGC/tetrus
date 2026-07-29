@@ -15,7 +15,6 @@ use crate::{
 pub enum BoardState {
     #[default]
     Pass,
-    Continue,
     Brake,
 }
 

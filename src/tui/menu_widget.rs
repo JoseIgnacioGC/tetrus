@@ -2,7 +2,12 @@ use std::{io, time::Duration};
 
 use crossterm::event::{poll, read, KeyCode};
 use ratatui::{
-    buffer::Buffer, layout::Rect, macros::span, style::Stylize, text::Text, widgets::Widget,
+    buffer::Buffer,
+    layout::Rect,
+    macros::span,
+    style::Stylize,
+    text::{Span, Text, ToSpan},
+    widgets::Widget,
 };
 
 #[derive(Default, PartialEq, Eq)]
@@ -15,14 +20,14 @@ pub enum MenuState {
 
 pub struct MenuWidget<'a> {
     option_index: usize,
-    menu_options: [&'a str; 2],
+    menu_options: [Span<'a>; 2],
 }
 
 impl<'a> MenuWidget<'a> {
     pub fn new() -> Self {
         Self {
             option_index: 0,
-            menu_options: ["play", "quit"],
+            menu_options: ["play".into(), "quit".into()],
         }
     }
 
@@ -68,7 +73,7 @@ impl<'a> Widget for &mut MenuWidget<'a> {
                     return span!("- {} -", option).green();
                 }
 
-                span!("  {}  ", option)
+                option.to_span()
             })
             .collect();
 

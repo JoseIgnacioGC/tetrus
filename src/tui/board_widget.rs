@@ -16,6 +16,7 @@ pub enum BoardState {
     #[default]
     Pass,
     Brake,
+    GameOver,
 }
 
 pub struct BoardWidget {
@@ -70,7 +71,7 @@ impl BoardWidget {
         if !self.board.is_block_falling {
             let block = self.blocks_manager.get_next_block();
             if !self.board.spawn_next_block(block) {
-                return Ok(BoardState::Brake);
+                return Ok(BoardState::GameOver);
             };
         }
 

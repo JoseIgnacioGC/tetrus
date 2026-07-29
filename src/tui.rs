@@ -11,6 +11,7 @@ use crate::{
     blocks,
     tui::{
         board_widget::{BoardState, BoardWidget},
+        gameover_widget::{GameoverState, GameoverWidget},
         menu_widget::{MenuState, MenuWidget},
         metrics_widget::MetricsWidget,
     },
@@ -43,10 +44,13 @@ pub struct Game<'a> {
     menu_widget: MenuWidget<'a>,
     metrics_widget: MetricsWidget,
     board_widget: BoardWidget,
+    gameover_widget: GameoverWidget<'a>,
     #[cfg(debug_assertions)]
     debug_widget: DebugWidget,
 }
 
+// TODO: implement "pause" state
+// TODO: pressing buttons to fast at the beginning brake main game loop
 // TODO: handle events globally
 // TODO: fix fps drop to 52 after widgets refactor
 impl<'a> Game<'a> {
@@ -64,9 +68,11 @@ impl<'a> Game<'a> {
             time: Instant::now(),
             game_state: GameState::Menu,
 
+            // TODO: implement a single dynamic widget attribute
             menu_widget: MenuWidget::new(),
             metrics_widget: MetricsWidget::new(),
             board_widget: BoardWidget::new(),
+            gameover_widget: GameoverWidget::new(),
             #[cfg(debug_assertions)]
             debug_widget: DebugWidget::new(),
         }
@@ -85,17 +91,33 @@ impl<'a> Game<'a> {
                 GameState::Game => {
                     match self.board_widget.run()? {
                         BoardState::Brake => break,
+                        BoardState::GameOver => {
+                            // TODO: stop game timer
+                            self.game_state = GameState::GameOver;
+                        }
                         BoardState::Pass => (),
                     };
                 }
-                GameState::GameOver => {}
+                GameState::GameOver => {
+                    match self.gameover_widget.run()? {
+                        GameoverState::Brake => break,
+                        GameoverState::EnterGame => {
+                            self.game_state = GameState::Game;
+                            todo!("reset game values");
+                        }
+                        GameoverState::Pass => (),
+                    };
+                }
             };
 
             terminal.draw(|frame| {
                 match self.game_state {
                     GameState::Menu => self.render_menu(frame),
                     GameState::Game => self.render_game(frame),
-                    GameState::GameOver => self.render_game(frame),
+                    GameState::GameOver => {
+                        self.render_game(frame);
+                        self.render_gameover(frame);
+                    }
                 };
             })?;
         }
@@ -148,4 +170,10 @@ impl<'a> Game<'a> {
             next_blocks_area,
         );
     }
+
+    fn render_gameover(&mut self, frame: &mut Frame) {
+        frame.render_widget(&mut self.gameover_widget, frame.area());
+    }
 }
+
+mod gameover_widget;

@@ -8,8 +8,7 @@ use ratatui::{
     macros::{line, span, text},
     widgets::Widget,
 };
-use std::fmt::Write;
-use std::time::Instant;
+use std::{fmt::Write, time::Duration};
 
 pub struct MetricsWidget {
     time: String,
@@ -29,8 +28,8 @@ impl MetricsWidget {
         }
     }
 
-    pub fn format_instant(&mut self, instant: &Instant) {
-        let total_ms = instant.elapsed().as_millis();
+    pub fn format_instant(&mut self, instant: &Duration) {
+        let total_ms = instant.as_millis();
 
         let minutes = (total_ms / 60_000) % 60;
         let seconds = (total_ms / 1_000) % 60;
@@ -45,8 +44,8 @@ impl MetricsWidget {
         );
     }
 
-    pub fn copy_metrics(&mut self, board: &Board, instant: &Instant) {
-        self.format_instant(instant);
+    pub fn copy_metrics(&mut self, board: &Board) {
+        self.format_instant(&board.timer.elapsed());
         self.level = board.level;
         self.cleaned_lines = board.cleaned_lines;
         self.score = board.score;

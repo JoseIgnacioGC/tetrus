@@ -1,4 +1,4 @@
-use crate::blocks::Block;
+use crate::{blocks::Block, utils::timer::Timer};
 use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
@@ -34,6 +34,7 @@ pub struct Board {
     pub score: usize,
     pub level: usize,
     pub fall_speed: Duration,
+    pub timer: Timer,
 
     columns_len: u16,
     rows_len: u16,
@@ -45,12 +46,26 @@ pub struct Board {
 impl Board {
     pub fn new(columns_len: u16, rows_len: u16) -> Self {
         Self {
+            level: 1,
             columns_len,
             rows_len,
             board: vec![vec![Span::raw(""); columns_len as usize]; rows_len as usize],
-            level: 1,
             ..Default::default()
         }
+    }
+
+    pub fn new_game(&mut self) {
+        self.is_block_falling = false;
+        self.cleaned_lines = 0;
+        self.score = 0;
+        self.level = 1;
+        self.fall_speed = Duration::ZERO;
+
+        self.coordinates.clear();
+        self.block_coordinates.clear();
+        self.timer.reset();
+
+        self.timer.start();
     }
 
     pub fn rotate_block(&mut self, key: KeyCode) -> bool {

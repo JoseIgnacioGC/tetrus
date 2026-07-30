@@ -25,12 +25,13 @@ use ratatui::{
     DefaultTerminal, Frame,
 };
 
-use std::{io, time::Instant};
+use std::io;
 
 const COLUMNS: u16 = 10;
 const ROWS: u16 = 22;
 
-enum GameState {
+#[derive(PartialEq, Clone, Copy)]
+pub enum GameState {
     Menu,
     Game,
     GameOver,
@@ -38,7 +39,6 @@ enum GameState {
 
 pub struct Game<'a> {
     title: Line<'a>,
-    time: Instant,
     game_state: GameState,
 
     menu_widget: MenuWidget<'a>,
@@ -52,7 +52,7 @@ pub struct Game<'a> {
 // TODO: implement "pause" state
 // TODO: pressing buttons to fast at the beginning brake main game loop
 // TODO: handle events globally
-// TODO: fix fps drop to 52 after widgets refactor
+// TODO: fix fps drop after widgets refactor
 impl<'a> Game<'a> {
     pub fn new() -> Self {
         Self {
@@ -65,10 +65,8 @@ impl<'a> Game<'a> {
                 "S".magenta(),
             ]
             .centered(),
-            time: Instant::now(),
             game_state: GameState::Menu,
 
-            // TODO: implement a single dynamic widget attribute
             menu_widget: MenuWidget::new(),
             metrics_widget: MetricsWidget::new(),
             board_widget: BoardWidget::new(),
@@ -84,7 +82,10 @@ impl<'a> Game<'a> {
                 GameState::Menu => {
                     match self.menu_widget.run()? {
                         MenuState::Brake => break,
-                        MenuState::EnterGame => self.game_state = GameState::Game,
+                        MenuState::EnterGame => {
+                            self.game_state = GameState::Game;
+                            self.board_widget.board.new_game();
+                        }
                         MenuState::Pass => (),
                     };
                 }
@@ -92,7 +93,7 @@ impl<'a> Game<'a> {
                     match self.board_widget.run()? {
                         BoardState::Brake => break,
                         BoardState::GameOver => {
-                            // TODO: stop game timer
+                            self.board_widget.board.timer.pause();
                             self.game_state = GameState::GameOver;
                         }
                         BoardState::Pass => (),
@@ -103,7 +104,7 @@ impl<'a> Game<'a> {
                         GameoverState::Brake => break,
                         GameoverState::EnterGame => {
                             self.game_state = GameState::Game;
-                            todo!("reset game values");
+                            self.board_widget.board.new_game();
                         }
                         GameoverState::Pass => (),
                     };
@@ -145,8 +146,7 @@ impl<'a> Game<'a> {
             title_area.centered_vertically(constraint!(== 1)),
         );
 
-        self.metrics_widget
-            .copy_metrics(&self.board_widget.board, &self.time);
+        self.metrics_widget.copy_metrics(&self.board_widget.board);
         frame.render_widget(&self.metrics_widget, metrics_area);
 
         #[cfg(debug_assertions)]

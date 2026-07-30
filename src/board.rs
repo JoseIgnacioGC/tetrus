@@ -29,6 +29,7 @@ const MAX_FALL_SPEED: usize = 20;
 #[derive(Default)]
 pub struct Board {
     pub is_block_falling: bool,
+    pub is_paused: bool,
     pub cleaned_lines: usize,
     pub score: usize,
     pub level: usize,
@@ -51,6 +52,7 @@ impl Board {
 
     pub fn new_game(&mut self) {
         self.is_block_falling = false;
+        self.is_paused = false;
         self.cleaned_lines = 0;
         self.score = 0;
         self.level = 1;
@@ -63,6 +65,16 @@ impl Board {
 
         self.timer.reset();
         self.timer.start();
+    }
+
+    pub fn pause(&mut self) {
+        if self.is_paused {
+            self.is_paused = false;
+            self.timer.start();
+        } else {
+            self.is_paused = true;
+            self.timer.pause();
+        }
     }
 
     pub fn rotate_block(&mut self, key: KeyCode) -> bool {

@@ -49,9 +49,9 @@ pub struct Game<'a> {
     debug_widget: DebugWidget,
 }
 
-// TODO: implement "pause" state
 // TODO: handle events globally
 // TODO: fix fps drop after widgets refactor
+// TODO: blocks can not rotate when they are touching one side of the board
 impl<'a> Game<'a> {
     pub fn new() -> Self {
         Self {
@@ -95,6 +95,7 @@ impl<'a> Game<'a> {
                             self.game_state = GameState::GameOver;
                         }
                         BoardState::Pass => (),
+                        BoardState::Paused => (),
                     };
                 }
                 GameState::GameOver => {

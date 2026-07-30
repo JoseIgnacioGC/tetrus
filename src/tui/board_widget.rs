@@ -71,6 +71,7 @@ impl BoardWidget {
         if !self.board.is_block_falling {
             let block = self.blocks_manager.get_next_block();
             if !self.board.spawn_next_block(block) {
+                self.board.timer.pause();
                 return Ok(BoardState::GameOver);
             };
         }

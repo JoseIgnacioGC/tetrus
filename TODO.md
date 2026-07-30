@@ -7,13 +7,14 @@
 - [ ] Implement "combo" mechanic
 
 ### Others
-- [ ] Implement an initial menu
-- [ ] Implement a "game over" screen & "try again" option
+- [x] Implement an initial menu
+- [x] Implement a "game over" screen & "try again" option
 
 
 # Maybe
 - [ ] Implement better score system (t-spin, clear, etc.)
-- [ ] Improve the visual display of "combo name" messages using custom pixel rendering
+- [ ] Implement visual display of "combo name" messages using custom pixel rendering
 - [ ] Implement "delay frames"
+- [ ] Implement minimal keyboard instructions in the menu
 
 

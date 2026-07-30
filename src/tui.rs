@@ -93,7 +93,6 @@ impl<'a> Game<'a> {
                     match self.board_widget.run()? {
                         BoardState::Brake => break,
                         BoardState::GameOver => {
-                            self.board_widget.board.timer.pause();
                             self.game_state = GameState::GameOver;
                         }
                         BoardState::Pass => (),

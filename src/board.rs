@@ -142,11 +142,15 @@ impl Board {
             self.current_square_coord = next_pos;
             true
         } else {
-            for (bx, by, color) in block.get_coordinates(self.current_rotation) {
-                let gx = x + bx as isize;
-                let gy = y + by as isize;
-                if gx >= 0 && gx < COLUMNS as isize && gy >= 0 && gy < ROWS as isize {
-                    self.board[gy as usize][gx as usize] = Some(color);
+            for (block_x, block_y, color) in block.get_coordinates(self.current_rotation) {
+                let board_x = x + block_x as isize;
+                let board_y = y + block_y as isize;
+                if board_x >= 0
+                    && board_x < COLUMNS as isize
+                    && board_y >= 0
+                    && board_y < ROWS as isize
+                {
+                    self.board[board_y as usize][board_x as usize] = Some(color);
                 }
             }
             self.current_block = None;
@@ -161,15 +165,15 @@ impl Board {
         block
             .get_coordinates(rotation)
             .into_iter()
-            .all(|(bx, by, _)| {
-                let gx = square_x + bx as isize;
-                let gy = square_y + by as isize;
+            .all(|(block_x, block_y, _)| {
+                let board_x = square_x + block_x as isize;
+                let board_y = square_y + block_y as isize;
 
-                gx >= 0
-                    && gx < COLUMNS as isize
-                    && gy >= 0
-                    && gy < ROWS as isize
-                    && self.board[gy as usize][gx as usize].is_none()
+                board_x >= 0
+                    && board_x < COLUMNS as isize
+                    && board_y >= 0
+                    && board_y < ROWS as isize
+                    && self.board[board_y as usize][board_x as usize].is_none()
             })
     }
 
@@ -249,11 +253,20 @@ impl Widget for &Board {
 
         if let Some(block) = self.current_block {
             let (square_x, square_y) = self.current_square_coord;
-            for (bx, by, color) in block.get_coordinates(self.current_rotation) {
-                let gx = square_x + bx as isize;
-                let gy = square_y + by as isize;
-                if gx >= 0 && gx < COLUMNS as isize && gy >= 0 && gy < ROWS as isize {
-                    set_cell(gx as usize, gy as usize, '□', Style::default().fg(color));
+            for (block_x, block_y, color) in block.get_coordinates(self.current_rotation) {
+                let board_x = square_x + block_x as isize;
+                let board_y = square_y + block_y as isize;
+                if board_x >= 0
+                    && board_x < COLUMNS as isize
+                    && board_y >= 0
+                    && board_y < ROWS as isize
+                {
+                    set_cell(
+                        board_x as usize,
+                        board_y as usize,
+                        '□',
+                        Style::default().fg(color),
+                    );
                 }
             }
         }

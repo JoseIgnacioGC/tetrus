@@ -123,7 +123,7 @@ impl Widget for &BoardWidget {
 
         if self.board.is_paused {
             let block_area = area.centered(constraint!(== 50%), constraint!(== 5));
-            let options_area = block_area
+            let text_area = block_area
                 .inner(Margin::new(1, 1))
                 .centered_vertically(constraint!(== 1));
 
@@ -131,7 +131,7 @@ impl Widget for &BoardWidget {
 
             Clear.render(block_area, buf);
             Block::bordered().render(block_area, buf);
-            pause_text.render(options_area, buf);
+            pause_text.render(text_area, buf);
         }
     }
 }

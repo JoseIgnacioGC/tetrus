@@ -87,12 +87,30 @@ impl Board {
             _ => self.current_rotation.rotate_clockwise(),
         };
 
-        if self.can_place(block, self.current_square_coord, next_rotation) {
-            self.current_rotation = next_rotation;
-            true
-        } else {
-            false
+        let (x, y) = self.current_square_coord;
+        const KICK_OFFSETS: [(isize, isize); 10] = [
+            (0, 0),
+            (1, 0),
+            (-1, 0),
+            (2, 0),
+            (-2, 0),
+            (0, -1),
+            (1, -1),
+            (-1, -1),
+            (0, -2),
+            (0, 1),
+        ];
+
+        for (dx, dy) in KICK_OFFSETS {
+            let test_coord = (x + dx, y + dy);
+            if self.can_place(block, test_coord, next_rotation) {
+                self.current_square_coord = test_coord;
+                self.current_rotation = next_rotation;
+                return true;
+            }
         }
+
+        false
     }
 
     pub fn spawn_next_block(&mut self, block: &Block) -> bool {

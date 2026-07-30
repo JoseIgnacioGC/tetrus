@@ -51,7 +51,6 @@ pub struct Game<'a> {
 }
 
 // TODO: fix fps drop after widgets refactor
-// TODO: blocks can not rotate when they are touching one side of the board
 impl<'a> Game<'a> {
     pub fn new() -> Self {
         Self {

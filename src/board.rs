@@ -3,9 +3,8 @@ use crossterm::event::KeyCode;
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
-    style::{Color, Stylize},
-    text::{Line, Span, Text},
-    widgets::{Paragraph, Widget},
+    style::{Color, Style},
+    widgets::Widget,
 };
 
 use std::{
@@ -40,7 +39,6 @@ pub struct Board {
     rows_len: u16,
     coordinates: HashSet<Coords>, // TODO: replace by a HashMap or Vector of HashSet maybe
     block_coordinates: HashSet<Coords>,
-    board: Vec<Vec<Span<'static>>>,
 }
 
 impl Board {
@@ -49,7 +47,6 @@ impl Board {
             level: 1,
             columns_len,
             rows_len,
-            board: vec![vec![Span::raw(""); columns_len as usize]; rows_len as usize],
             ..Default::default()
         }
     }
@@ -76,7 +73,7 @@ impl Board {
         let rotated_block: HashSet<Coords> = self.rotate_block_coordinates(key);
 
         if rotated_block.len() != self.block_coordinates.len()
-            || self.is_block_collinding_with_blocks(&rotated_block)
+            || self.is_block_colliding_with_blocks(&rotated_block)
         {
             return false;
         }
@@ -94,7 +91,7 @@ impl Board {
             .map(|(x, y, color)| (x + center_coordinates_x, *y, *color))
             .collect();
 
-        if self.is_block_collinding_with_blocks(&block_coordinates) {
+        if self.is_block_colliding_with_blocks(&block_coordinates) {
             return false;
         }
 
@@ -122,7 +119,7 @@ impl Board {
             .collect();
 
         if moved_block.len() != self.block_coordinates.len()
-            || self.is_block_collinding_with_blocks(&moved_block)
+            || self.is_block_colliding_with_blocks(&moved_block)
         {
             return;
         }
@@ -147,7 +144,7 @@ impl Board {
 
             return false;
         }
-        if self.is_block_collinding_with_blocks(&moved_block) {
+        if self.is_block_colliding_with_blocks(&moved_block) {
             self.coordinates.extend(&self.block_coordinates);
             self.block_coordinates.clear();
             self.clear_lines();
@@ -160,7 +157,7 @@ impl Board {
         true
     }
 
-    fn is_block_collinding_with_blocks(&self, block_coordinates: &HashSet<Coords>) -> bool {
+    fn is_block_colliding_with_blocks(&self, block_coordinates: &HashSet<Coords>) -> bool {
         let board_coords: HashSet<(u16, u16)> =
             self.coordinates.iter().map(|(x, y, _)| (*x, *y)).collect();
         let block_coords: HashSet<(u16, u16)> =
@@ -302,38 +299,36 @@ impl Board {
     }
 }
 
-impl Widget for &mut Board {
-    // TODO: write to the buffer instead of creating a paragraph
+impl Widget for &Board {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        for x in 0..self.columns_len {
-            self.board[0][x as usize] = Span::raw(" ");
-        }
-        for y in 1..self.rows_len {
-            for x in 0..self.columns_len {
-                self.board[y as usize][x as usize] = Span::raw(".");
+        let board_width = self.columns_len * 2;
+        let board_height = self.rows_len;
+
+        let start_x = area.x + area.width.saturating_sub(board_width) / 2;
+        let start_y = area.y + area.height.saturating_sub(board_height) / 2;
+
+        let mut set_cell = |x: u16, y: u16, ch: char, style: Style| {
+            let cell_x = start_x + (x * 2) + 1;
+            let cell_y = start_y + y;
+
+            if cell_x < area.right() && cell_y < area.bottom() {
+                buf[(cell_x, cell_y)].set_char(ch).set_style(style);
             }
-        }
+        };
 
-        self.coordinates
-            .iter()
-            .for_each(|&(x, y, color)| self.board[y as usize][x as usize] = "■".fg(color));
-        self.block_coordinates
-            .iter()
-            .for_each(|&(x, y, color)| self.board[y as usize][x as usize] = "□".fg(color));
+        (0..self.rows_len)
+            .flat_map(|y| (0..self.columns_len).map(move |x| (x, y)))
+            .for_each(|(x, y)| {
+                let symbol = if y == 0 { ' ' } else { '.' };
+                set_cell(x, y, symbol, Style::default());
+            });
 
-        let mut lines = vec![];
+        self.coordinates.iter().for_each(|&(x, y, color)| {
+            set_cell(x, y, '■', Style::default().fg(color));
+        });
 
-        for row in self.board.iter() {
-            let mut line_spans = Vec::new();
-            for span in row.iter() {
-                line_spans.push(Span::raw(" "));
-                line_spans.push(span.clone());
-            }
-            lines.push(Line::from(line_spans));
-        }
-
-        Paragraph::new(Text::from(lines))
-            .centered()
-            .render(area, buf);
+        self.block_coordinates.iter().for_each(|&(x, y, color)| {
+            set_cell(x, y, '□', Style::default().fg(color));
+        });
     }
 }

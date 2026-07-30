@@ -90,7 +90,7 @@ impl BoardWidget {
     }
 }
 
-impl Widget for &mut BoardWidget {
+impl Widget for &BoardWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
         self.board.render(area, buf);
     }

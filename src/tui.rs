@@ -154,7 +154,7 @@ impl<'a> Game<'a> {
             frame.render_widget(&mut self.debug_widget, metrics_area);
         }
 
-        frame.render_widget(&mut self.board_widget, board_area);
+        frame.render_widget(&self.board_widget, board_area);
 
         frame.render_widget(
             Paragraph::new("hold")

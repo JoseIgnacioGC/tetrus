@@ -1,6 +1,4 @@
-use std::{io, time::Duration};
-
-use crossterm::event::{poll, read, KeyCode};
+use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
@@ -31,34 +29,26 @@ impl<'a> MenuWidget<'a> {
         }
     }
 
-    pub fn run(&mut self) -> io::Result<MenuState> {
+    pub fn handle_key_event(&mut self, event: KeyEvent) -> MenuState {
         let options_len = self.menu_options.len();
 
-        while poll(Duration::ZERO)? {
-            if let Some(event) = read().map_or(None, |e| e.as_key_press_event()) {
-                match event.code {
-                    KeyCode::Up => {
-                        self.option_index = (self.option_index + options_len - 1) % options_len;
-                    }
-                    KeyCode::Down => {
-                        self.option_index = (self.option_index + 1) % options_len;
-                    }
-                    KeyCode::Enter | KeyCode::Char(' ') => {
-                        return match self.option_index {
-                            0 => Ok(MenuState::EnterGame),
-                            1 => Ok(MenuState::Brake),
-                            _ => unreachable!(),
-                        }
-                    }
-                    KeyCode::Esc => {
-                        return Ok(MenuState::Brake);
-                    }
-                    _ => {}
-                }
+        match event.code {
+            KeyCode::Up => {
+                self.option_index = (self.option_index + options_len - 1) % options_len;
+                MenuState::Pass
             }
+            KeyCode::Down => {
+                self.option_index = (self.option_index + 1) % options_len;
+                MenuState::Pass
+            }
+            KeyCode::Enter | KeyCode::Char(' ') => match self.option_index {
+                0 => MenuState::EnterGame,
+                1 => MenuState::Brake,
+                _ => unreachable!(),
+            },
+            KeyCode::Esc => MenuState::Brake,
+            _ => MenuState::Pass,
         }
-
-        Ok(MenuState::Pass)
     }
 }
 

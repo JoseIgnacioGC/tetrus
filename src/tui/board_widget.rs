@@ -1,8 +1,6 @@
-use std::{
-    io,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
+use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     buffer::Buffer,
     layout::{Margin, Rect},
@@ -43,70 +41,65 @@ impl BoardWidget {
         }
     }
 
-    pub fn run(&mut self) -> io::Result<BoardState> {
-        use crossterm::event::{poll, read, KeyCode};
+    pub fn handle_key_event(&mut self, event: KeyEvent) -> BoardState {
+        if self.board.is_paused {
+            return match event.code {
+                KeyCode::Enter | KeyCode::Char('p') => {
+                    self.board.pause();
+                    BoardState::Paused
+                }
+                KeyCode::Esc => BoardState::Brake,
+                _ => BoardState::Paused,
+            };
+        }
 
+        match event.code {
+            KeyCode::Left | KeyCode::Right => {
+                self.board.move_block_x_axis(event.code);
+                BoardState::Pass
+            }
+            KeyCode::Down => {
+                let _ = self.board.move_block_down_or_set();
+                BoardState::Pass
+            }
+            KeyCode::Char('z') | KeyCode::Char('x') => {
+                let _ = self.board.rotate_block(event.code);
+                BoardState::Pass
+            }
+            KeyCode::Char(' ') => {
+                while self.board.move_block_down_or_set() {}
+                BoardState::Pass
+            }
+            KeyCode::Enter | KeyCode::Char('p') => {
+                self.board.pause();
+                BoardState::Paused
+            }
+            KeyCode::Esc => BoardState::Brake,
+            _ => BoardState::Pass,
+        }
+    }
+
+    pub fn update(&mut self) -> BoardState {
         let current_time = Instant::now();
         let delta_time = current_time.duration_since(self.last_tick);
         self.last_tick = current_time;
 
         if self.board.is_paused {
-            while poll(Duration::ZERO)? {
-                if let Some(event) = read().map_or(None, |e| e.as_key_press_event()) {
-                    match event.code {
-                        KeyCode::Enter | KeyCode::Char('p') => {
-                            self.board.pause();
-                        }
-                        KeyCode::Esc => {
-                            return Ok(BoardState::Brake);
-                        }
-                        _ => (),
-                    }
-                }
-            }
-
             let elapsed = current_time.elapsed();
             if elapsed < self.tick_interval {
                 std::thread::sleep(self.tick_interval - elapsed);
             };
 
-            return Ok(BoardState::Paused);
+            return BoardState::Paused;
         }
 
         self.acc_time += delta_time;
-
-        while poll(Duration::ZERO)? {
-            if let Some(event) = read().map_or(None, |e| e.as_key_press_event()) {
-                match event.code {
-                    KeyCode::Left | KeyCode::Right => self.board.move_block_x_axis(event.code),
-                    KeyCode::Down => {
-                        let _ = self.board.move_block_down_or_set();
-                    }
-                    KeyCode::Char('z') | KeyCode::Char('x') => {
-                        let _ = self.board.rotate_block(event.code);
-                    }
-                    KeyCode::Char(' ') => while self.board.move_block_down_or_set() {},
-                    KeyCode::Enter | KeyCode::Char('p') => {
-                        self.board.pause();
-                        let elapsed = current_time.elapsed();
-                        if elapsed < self.tick_interval {
-                            std::thread::sleep(self.tick_interval - elapsed);
-                        };
-                        return Ok(BoardState::Paused);
-                    }
-                    KeyCode::Esc => {
-                        return Ok(BoardState::Brake);
-                    }
-                    _ => (),
-                }
-            }
-        }
 
         if !self.board.is_block_falling {
             let block = self.blocks_manager.get_next_block();
             if !self.board.spawn_next_block(block) {
                 self.board.timer.pause();
-                return Ok(BoardState::GameOver);
+                return BoardState::GameOver;
             };
         }
 
@@ -120,7 +113,7 @@ impl BoardWidget {
             std::thread::sleep(self.tick_interval - elapsed);
         };
 
-        Ok(BoardState::Pass)
+        BoardState::Pass
     }
 }
 

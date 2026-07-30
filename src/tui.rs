@@ -25,7 +25,8 @@ use ratatui::{
     DefaultTerminal, Frame,
 };
 
-use std::io;
+use crossterm::event::{poll, read};
+use std::{io, time::Duration};
 
 pub const COLUMNS: u16 = 10;
 pub const ROWS: u16 = 22;
@@ -49,7 +50,6 @@ pub struct Game<'a> {
     debug_widget: DebugWidget,
 }
 
-// TODO: handle events globally
 // TODO: fix fps drop after widgets refactor
 // TODO: blocks can not rotate when they are touching one side of the board
 impl<'a> Game<'a> {
@@ -75,40 +75,50 @@ impl<'a> Game<'a> {
         }
     }
 
-    pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
-        loop {
-            match self.game_state {
-                GameState::Menu => {
-                    match self.menu_widget.run()? {
-                        MenuState::Brake => break,
+    fn handle_events(&mut self) -> io::Result<bool> {
+        while poll(Duration::ZERO)? {
+            if let Some(event) = read().map_or(None, |e| e.as_key_press_event()) {
+                match self.game_state {
+                    GameState::Menu => match self.menu_widget.handle_key_event(event) {
+                        MenuState::Brake => return Ok(true),
                         MenuState::EnterGame => {
                             self.game_state = GameState::Game;
                             self.board_widget.board.new_game();
                         }
                         MenuState::Pass => (),
-                    };
-                }
-                GameState::Game => {
-                    match self.board_widget.run()? {
-                        BoardState::Brake => break,
-                        BoardState::GameOver => {
-                            self.game_state = GameState::GameOver;
-                        }
-                        BoardState::Pass => (),
-                        BoardState::Paused => (),
-                    };
-                }
-                GameState::GameOver => {
-                    match self.gameover_widget.run()? {
-                        GameoverState::Brake => break,
+                    },
+                    GameState::Game => match self.board_widget.handle_key_event(event) {
+                        BoardState::Brake => return Ok(true),
+                        _ => (),
+                    },
+                    GameState::GameOver => match self.gameover_widget.handle_key_event(event) {
+                        GameoverState::Brake => return Ok(true),
                         GameoverState::EnterGame => {
                             self.game_state = GameState::Game;
                             self.board_widget.board.new_game();
                         }
                         GameoverState::Pass => (),
-                    };
+                    },
                 }
-            };
+            }
+        }
+        Ok(false)
+    }
+
+    pub fn run(&mut self, terminal: &mut DefaultTerminal) -> io::Result<()> {
+        loop {
+            if self.handle_events()? {
+                break;
+            }
+
+            match self.game_state {
+                GameState::Game => {
+                    if self.board_widget.update() == BoardState::GameOver {
+                        self.game_state = GameState::GameOver;
+                    }
+                }
+                _ => std::thread::sleep(Duration::from_millis(16)),
+            }
 
             terminal.draw(|frame| {
                 match self.game_state {

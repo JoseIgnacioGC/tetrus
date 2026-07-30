@@ -1,6 +1,4 @@
-use std::{io, time::Duration};
-
-use crossterm::event::{poll, read, KeyCode};
+use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     buffer::Buffer,
     layout::{Margin, Rect},
@@ -31,34 +29,26 @@ impl<'a> GameoverWidget<'a> {
         }
     }
 
-    pub fn run(&mut self) -> io::Result<GameoverState> {
+    pub fn handle_key_event(&mut self, event: KeyEvent) -> GameoverState {
         let options_len = self.menu_options.iter().len();
 
-        while poll(Duration::ZERO)? {
-            if let Some(event) = read().map_or(None, |e| e.as_key_press_event()) {
-                match event.code {
-                    KeyCode::Up => {
-                        self.option_index = (self.option_index + options_len - 1) % options_len;
-                    }
-                    KeyCode::Down => {
-                        self.option_index = (self.option_index + 1) % options_len;
-                    }
-                    KeyCode::Enter | KeyCode::Char(' ') => {
-                        return match self.option_index {
-                            0 => Ok(GameoverState::EnterGame),
-                            1 => Ok(GameoverState::Brake),
-                            _ => unreachable!(),
-                        }
-                    }
-                    KeyCode::Esc => {
-                        return Ok(GameoverState::Brake);
-                    }
-                    _ => {}
-                }
+        match event.code {
+            KeyCode::Up => {
+                self.option_index = (self.option_index + options_len - 1) % options_len;
+                GameoverState::Pass
             }
+            KeyCode::Down => {
+                self.option_index = (self.option_index + 1) % options_len;
+                GameoverState::Pass
+            }
+            KeyCode::Enter | KeyCode::Char(' ') => match self.option_index {
+                0 => GameoverState::EnterGame,
+                1 => GameoverState::Brake,
+                _ => unreachable!(),
+            },
+            KeyCode::Esc => GameoverState::Brake,
+            _ => GameoverState::Pass,
         }
-
-        Ok(GameoverState::Pass)
     }
 }
 

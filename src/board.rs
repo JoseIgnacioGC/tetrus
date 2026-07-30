@@ -35,10 +35,10 @@ pub struct Board {
     pub level: usize,
     pub fall_speed: Duration,
     pub timer: Timer,
+    pub current_rotation: Rotation,
 
     board: [[Option<Color>; COLUMNS as usize]; ROWS as usize],
     current_block: Option<Block>,
-    current_rotation: Rotation,
     current_square_coord: (isize, isize),
 }
 

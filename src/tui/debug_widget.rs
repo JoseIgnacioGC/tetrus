@@ -6,7 +6,7 @@ use ratatui::{
 };
 use std::time::{Duration, Instant};
 
-use crate::board::Board;
+use crate::{blocks::Rotation, board::Board};
 
 #[cfg(debug_assertions)]
 pub struct DebugWidget {
@@ -16,6 +16,7 @@ pub struct DebugWidget {
     fps_counter: usize,
     fps: usize,
     fall_speed: f32,
+    rotation: Rotation,
 }
 
 impl DebugWidget {
@@ -27,11 +28,13 @@ impl DebugWidget {
             fps_counter: 0,
             fps: 60,
             fall_speed: 0.0,
+            rotation: Rotation::Deg0,
         }
     }
 
     pub fn copy_metrics(&mut self, board: &Board) {
         self.fall_speed = board.fall_speed.as_secs_f32();
+        self.rotation = board.current_rotation;
     }
 }
 
@@ -54,6 +57,7 @@ impl Widget for &mut DebugWidget {
             "[debug]",
             span!("fps: {}", self.fps),
             span!("fall_speed: {}", self.fall_speed),
+            span!("rotation: {:?}", self.rotation),
         ]
         .left_aligned()
         .render(area.offset(Offset::new(3, 0)), buf);

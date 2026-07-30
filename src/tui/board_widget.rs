@@ -5,11 +5,7 @@ use std::{
 
 use ratatui::{buffer::Buffer, layout::Rect, widgets::Widget};
 
-use crate::{
-    blocks_manager::BlocksManager,
-    board::Board,
-    tui::{COLUMNS, ROWS},
-};
+use crate::{blocks_manager::BlocksManager, board::Board};
 
 #[derive(Default, PartialEq, Eq)]
 pub enum BoardState {
@@ -34,7 +30,7 @@ impl BoardWidget {
 
         Self {
             tick_interval: tick_60fps_interval,
-            board: Board::new(COLUMNS, ROWS),
+            board: Board::new(),
             blocks_manager: BlocksManager::new(),
             last_tick: Instant::now(),
             acc_time: Duration::ZERO,

@@ -27,8 +27,8 @@ use ratatui::{
 
 use std::io;
 
-const COLUMNS: u16 = 10;
-const ROWS: u16 = 22;
+pub const COLUMNS: u16 = 10;
+pub const ROWS: u16 = 22;
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum GameState {
@@ -50,7 +50,6 @@ pub struct Game<'a> {
 }
 
 // TODO: implement "pause" state
-// TODO: pressing buttons to fast at the beginning brake main game loop
 // TODO: handle events globally
 // TODO: fix fps drop after widgets refactor
 impl<'a> Game<'a> {

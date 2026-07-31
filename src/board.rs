@@ -301,14 +301,19 @@ impl Widget for &Board {
             let cell_y = start_y + y as u16;
 
             if cell_x < area.right() && cell_y < area.bottom() {
-                buf[(cell_x, cell_y)].set_char(ch).set_style(style);
+                let cell = &mut buf[(cell_x, cell_y)];
+                cell.reset();
+                cell.set_char(ch).set_style(style);
             }
         };
 
         for y in 0..ROWS {
             for x in 0..COLUMNS {
-                let symbol = if y == 0 || y == 1 { ' ' } else { '.' };
-                set_cell(x as usize, y as usize, symbol, Style::default());
+                if y == 0 || y == 1 {
+                    set_cell(x as usize, y as usize, ' ', Style::default());
+                } else {
+                    set_cell(x as usize, y as usize, '.', Style::default().dim());
+                }
             }
         }
 

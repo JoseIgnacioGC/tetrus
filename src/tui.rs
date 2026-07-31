@@ -21,7 +21,6 @@ use crate::{
     },
 };
 use ratatui::{
-    layout::Offset,
     macros::{constraint, horizontal, line, vertical},
     style::Stylize,
     text::Line,
@@ -58,19 +57,21 @@ pub struct Game<'a> {
 // TODO: fix fps drop after widgets refactor
 impl<'a> Game<'a> {
     pub fn new() -> Self {
+        let title = line![
+            "T".red(),
+            "E".fg(blocks::ORANGE),
+            "T".yellow(),
+            "R".green(),
+            "U".cyan(),
+            "S".magenta(),
+        ]
+        .centered();
+
         Self {
-            title: line![
-                "T".red(),
-                "E".fg(blocks::ORANGE),
-                "T".yellow(),
-                "R".green(),
-                "U".cyan(),
-                "S".magenta(),
-            ]
-            .centered(),
+            title: title.clone(),
             game_state: GameState::Menu,
 
-            menu_widget: MenuWidget::new(),
+            menu_widget: MenuWidget::new(title),
             metrics_widget: MetricsWidget::new(),
             board_widget: BoardWidget::new(),
             held_block_widget: HeldBlockWidget::new(),
@@ -143,11 +144,29 @@ impl<'a> Game<'a> {
     }
 
     fn render_menu(&mut self, frame: &mut Frame) {
-        let [_, area] = vertical![*=1, *= 1].areas(frame.area());
+        let [_, menu_area, bottom_area] = vertical![*=1, == 4, *=1].areas(frame.area());
+        let [_, controls_area, _] = vertical![*=1, == 1, == 2].areas(bottom_area);
 
-        frame.render_widget(&self.title, area.offset(Offset { x: 0, y: -4 }));
+        frame.render_widget(&mut self.menu_widget, menu_area);
 
-        frame.render_widget(&mut self.menu_widget, area.offset(Offset { x: 0, y: -2 }));
+        let controls_hint = line![
+            "Use ",
+            "[←↓→]".cyan(),
+            " move ".dim(),
+            "[z][x]".cyan(),
+            " rotate ".dim(),
+            "[c]".cyan(),
+            " hold ".dim(),
+            "[Space]".cyan(),
+            " drop ".dim(),
+            "[p]".cyan(),
+            " pause ".dim(),
+            "[Esc]".cyan(),
+            " quit".dim(),
+        ]
+        .centered();
+
+        frame.render_widget(controls_hint, controls_area);
     }
 
     fn render_game(&mut self, frame: &mut Frame) {

@@ -4,7 +4,7 @@ use ratatui::{
     layout::Rect,
     macros::span,
     style::Stylize,
-    text::{Span, Text, ToSpan},
+    text::{Line, Span, Text, ToSpan},
     widgets::Widget,
 };
 
@@ -17,13 +17,15 @@ pub enum MenuState {
 }
 
 pub struct MenuWidget<'a> {
+    title: Line<'a>,
     option_index: usize,
     menu_options: [Span<'a>; 2],
 }
 
 impl<'a> MenuWidget<'a> {
-    pub fn new() -> Self {
+    pub fn new(title: Line<'a>) -> Self {
         Self {
+            title,
             option_index: 0,
             menu_options: ["play".into(), "quit".into()],
         }
@@ -54,19 +56,17 @@ impl<'a> MenuWidget<'a> {
 
 impl<'a> Widget for &mut MenuWidget<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let menu_options: Text = self
-            .menu_options
-            .iter()
-            .enumerate()
-            .map(|(i, option)| {
-                if i == self.option_index {
-                    return span!("- {} -", option).green();
-                }
+        let mut menu_text = Text::from(self.title.clone());
+        menu_text.push_line(Line::raw(""));
 
-                option.to_span()
-            })
-            .collect();
+        for (i, option) in self.menu_options.iter().enumerate() {
+            if i == self.option_index {
+                menu_text.push_line(span!("- {} -", option).green());
+            } else {
+                menu_text.push_line(option.to_span());
+            }
+        }
 
-        menu_options.centered().render(area, buf);
+        menu_text.centered().render(area, buf);
     }
 }

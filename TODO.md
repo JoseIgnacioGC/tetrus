@@ -21,3 +21,4 @@
 - [ ] Implement minimal keyboard instructions in the menu.
 - [ ] Implement optional (or default) background color (should look better in terminals with not custom styles).
 - [ ] Implement display the top 5 best scores & current game score in the game over modal.
+- [ ] Implement 180 deg rotation when pressing "a"

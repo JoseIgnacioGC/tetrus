@@ -1,5 +1,6 @@
 use crate::{
     blocks::{Block, Rotation},
+    blocks_manager::BlocksManager,
     tui::{COLUMNS, ROWS},
     utils::timer::Timer,
 };
@@ -24,7 +25,7 @@ pub const MOVEMENT_SETS: [(&str, usize); 5] = [
     ("quad", 800),
 ];
 
-const MAX_FALL_SPEED: usize = 20;
+const MAX_FALL_SPEED_LEVEL: usize = 20;
 
 #[derive(Default)]
 pub struct Board {
@@ -36,6 +37,8 @@ pub struct Board {
     pub fall_speed: Duration,
     pub timer: Timer,
     pub current_rotation: Rotation,
+    pub held_block: Option<Block>,
+    pub can_hold: bool,
 
     board: [[Option<Color>; COLUMNS as usize]; ROWS as usize],
     current_block: Option<Block>,
@@ -46,6 +49,7 @@ impl Board {
     pub fn new() -> Self {
         Self {
             level: 1,
+            can_hold: true,
             ..Default::default()
         }
     }
@@ -62,6 +66,8 @@ impl Board {
         self.current_block = None;
         self.current_rotation = Rotation::Deg0;
         self.current_square_coord = (0, 0);
+        self.held_block = None;
+        self.can_hold = true;
 
         self.timer.reset();
         self.timer.start();
@@ -77,13 +83,46 @@ impl Board {
         }
     }
 
+    pub fn hold_block(&mut self, blocks_manager: &mut BlocksManager) -> bool {
+        if !self.can_hold || self.is_paused {
+            return false;
+        }
+
+        let Some(current) = self.current_block else {
+            return false;
+        };
+
+        self.can_hold = false;
+
+        if let Some(prev_held) = self.held_block {
+            self.held_block = Some(current);
+            let pos_x = (COLUMNS as isize - prev_held.side_len() as isize) / 2;
+            let pos_y = 0;
+            self.current_block = Some(prev_held);
+            self.current_rotation = Rotation::Deg0;
+            self.current_square_coord = (pos_x, pos_y);
+        } else {
+            self.held_block = Some(current);
+            let next_block = *blocks_manager.get_next_block();
+            let pos_x = (COLUMNS as isize - next_block.side_len() as isize) / 2;
+            let pos_y = 0;
+            self.current_block = Some(next_block);
+            self.current_rotation = Rotation::Deg0;
+            self.current_square_coord = (pos_x, pos_y);
+        }
+
+        true
+    }
+
     pub fn rotate_block(&mut self, key: KeyCode) -> bool {
         let Some(block) = self.current_block else {
             return false;
         };
 
         let next_rotation = match key {
-            KeyCode::Char('z') => self.current_rotation.rotate_counter_clockwise(),
+            KeyCode::Char('z') | KeyCode::Char('Z') => {
+                self.current_rotation.rotate_counter_clockwise()
+            }
             _ => self.current_rotation.rotate_clockwise(),
         };
 
@@ -125,6 +164,7 @@ impl Board {
         self.current_rotation = Rotation::Deg0;
         self.current_square_coord = (pos_x, pos_y);
         self.is_block_falling = true;
+        self.can_hold = true;
 
         self.update_metrics();
 
@@ -222,7 +262,7 @@ impl Board {
     }
 
     fn update_fall_speed(&mut self) {
-        if self.level > MAX_FALL_SPEED {
+        if self.level > MAX_FALL_SPEED_LEVEL {
             return;
         }
 
@@ -256,7 +296,7 @@ impl Widget for &Board {
 
         for y in 0..ROWS {
             for x in 0..COLUMNS {
-                let symbol = if y == 0 { ' ' } else { '.' };
+                let symbol = if y == 0 || y == 1 { ' ' } else { '.' };
                 set_cell(x as usize, y as usize, symbol, Style::default());
             }
         }

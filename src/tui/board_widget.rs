@@ -51,7 +51,7 @@ impl BoardWidget {
     pub fn handle_key_event(&mut self, event: KeyEvent) -> BoardState {
         if self.board.is_paused {
             return match event.code {
-                KeyCode::Enter | KeyCode::Char('p') => {
+                KeyCode::Enter | KeyCode::Char('p') | KeyCode::Char('P') => {
                     self.board.pause();
                     BoardState::Paused
                 }
@@ -69,15 +69,21 @@ impl BoardWidget {
                 let _ = self.board.move_block_down_or_set();
                 BoardState::Pass
             }
-            KeyCode::Char('z') | KeyCode::Char('x') => {
+            KeyCode::Char('z') | KeyCode::Char('Z') | KeyCode::Char('x') | KeyCode::Char('X') => {
                 let _ = self.board.rotate_block(event.code);
                 BoardState::Pass
             }
             KeyCode::Char(' ') => {
-                while self.board.move_block_down_or_set() {}
+                while self.board.move_block_down_or_set() {
+                    self.acc_time = Duration::ZERO;
+                }
                 BoardState::Pass
             }
-            KeyCode::Enter | KeyCode::Char('p') => {
+            KeyCode::Char('c') | KeyCode::Char('C') => {
+                let _ = self.board.hold_block(&mut self.blocks_manager);
+                BoardState::Pass
+            }
+            KeyCode::Enter | KeyCode::Char('p') | KeyCode::Char('P') => {
                 self.board.pause();
                 BoardState::Paused
             }

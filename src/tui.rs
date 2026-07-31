@@ -1,4 +1,5 @@
 mod board_widget;
+mod held_block_widget;
 mod menu_widget;
 mod metrics_widget;
 
@@ -12,13 +13,14 @@ use crate::{
     tui::{
         board_widget::{BoardState, BoardWidget},
         gameover_widget::{GameoverState, GameoverWidget},
+        held_block_widget::HeldBlockWidget,
         menu_widget::{MenuState, MenuWidget},
         metrics_widget::MetricsWidget,
     },
 };
 use ratatui::{
     layout::Offset,
-    macros::{constraint, horizontal, line, vertical},
+    macros::{constraint, horizontal, line, text, vertical},
     style::Stylize,
     text::Line,
     widgets::{Block, Paragraph},
@@ -45,6 +47,7 @@ pub struct Game<'a> {
     menu_widget: MenuWidget<'a>,
     metrics_widget: MetricsWidget,
     board_widget: BoardWidget,
+    held_block_widget: HeldBlockWidget,
     gameover_widget: GameoverWidget<'a>,
     #[cfg(debug_assertions)]
     debug_widget: DebugWidget,
@@ -68,6 +71,7 @@ impl<'a> Game<'a> {
             menu_widget: MenuWidget::new(),
             metrics_widget: MetricsWidget::new(),
             board_widget: BoardWidget::new(),
+            held_block_widget: HeldBlockWidget::new(),
             gameover_widget: GameoverWidget::new(),
             #[cfg(debug_assertions)]
             debug_widget: DebugWidget::new(),
@@ -165,14 +169,13 @@ impl<'a> Game<'a> {
 
         frame.render_widget(&self.board_widget, board_area);
 
+        self.held_block_widget
+            .copy_metrics(&self.board_widget.board);
+        frame.render_widget(&self.held_block_widget, hold_area);
+
+        // TODO: must display 5 blocks
         frame.render_widget(
-            Paragraph::new("hold")
-                .block(Block::default())
-                .right_aligned(),
-            hold_area,
-        );
-        frame.render_widget(
-            Paragraph::new("next")
+            Paragraph::new(text!["", "", "next"])
                 .block(Block::default())
                 .left_aligned(),
             next_blocks_area,

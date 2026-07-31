@@ -170,7 +170,8 @@ impl<'a> Game<'a> {
     }
 
     fn render_game(&mut self, frame: &mut Frame) {
-        let [title_area, game_area] = vertical![== 3,== ROWS].areas(frame.area());
+        let [_, title_area, game_area, _] =
+            vertical![*= 1, == 3, == ROWS, *= 1].areas(frame.area());
         let [left_area, board_area, next_blocks_area] =
             horizontal![*= 1, == COLUMNS * 2 + 3, *= 1].areas(game_area);
         let [hold_area, metrics_area] = vertical![*= 1, == 8].areas(left_area);

@@ -69,7 +69,11 @@ impl BoardWidget {
                 let _ = self.board.move_block_down_or_set();
                 BoardState::Pass
             }
-            KeyCode::Char('z') | KeyCode::Char('Z') | KeyCode::Char('x') | KeyCode::Char('X') => {
+            KeyCode::Up
+            | KeyCode::Char('z')
+            | KeyCode::Char('Z')
+            | KeyCode::Char('x')
+            | KeyCode::Char('X') => {
                 let _ = self.board.rotate_block(event.code);
                 BoardState::Pass
             }

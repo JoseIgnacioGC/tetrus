@@ -82,7 +82,7 @@ impl<'a> Game<'a> {
                         MenuState::Brake => return Ok(true),
                         MenuState::EnterGame => {
                             self.game_state = GameState::Game;
-                            self.board_widget.board.new_game();
+                            self.board_widget.new_game();
                         }
                         MenuState::Pass => (),
                     },
@@ -94,7 +94,7 @@ impl<'a> Game<'a> {
                         GameoverState::Brake => return Ok(true),
                         GameoverState::EnterGame => {
                             self.game_state = GameState::Game;
-                            self.board_widget.board.new_game();
+                            self.board_widget.new_game();
                         }
                         GameoverState::Pass => (),
                     },

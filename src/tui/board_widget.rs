@@ -41,6 +41,13 @@ impl BoardWidget {
         }
     }
 
+    pub fn new_game(&mut self) {
+        self.board.new_game();
+        self.last_tick = Instant::now();
+        self.acc_time = Duration::ZERO;
+        self.blocks_manager = BlocksManager::new();
+    }
+
     pub fn handle_key_event(&mut self, event: KeyEvent) -> BoardState {
         if self.board.is_paused {
             return match event.code {

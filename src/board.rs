@@ -83,6 +83,17 @@ impl Board {
         }
     }
 
+    pub fn get_ghost_coord(&self) -> Option<(isize, isize)> {
+        let block = self.current_block?;
+        let (x, mut ghost_y) = self.current_square_coord;
+
+        while self.can_place(block, (x, ghost_y + 1), self.current_rotation) {
+            ghost_y += 1;
+        }
+
+        Some((x, ghost_y))
+    }
+
     pub fn hold_block(&mut self, blocks_manager: &mut BlocksManager) -> bool {
         if !self.can_hold || self.is_paused {
             return false;
@@ -311,7 +322,35 @@ impl Widget for &Board {
 
         if let Some(block) = self.current_block {
             let (square_x, square_y) = self.current_square_coord;
-            for (block_x, block_y, color) in block.get_coordinates(self.current_rotation) {
+            let active_coords = block.get_coordinates(self.current_rotation);
+
+            if let Some((ghost_x, ghost_y)) = self.get_ghost_coord() {
+                if (ghost_x, ghost_y) != (square_x, square_y) {
+                    for (block_x, block_y, _color) in active_coords {
+                        let board_x = ghost_x + block_x as isize;
+                        let board_y = ghost_y + block_y as isize;
+                        let overlaps_active = active_coords.iter().any(|(ax, ay, _)| {
+                            square_x + *ax as isize == board_x && square_y + *ay as isize == board_y
+                        });
+
+                        if !overlaps_active
+                            && board_x >= 0
+                            && board_x < COLUMNS as isize
+                            && board_y >= 0
+                            && board_y < ROWS as isize
+                        {
+                            set_cell(
+                                board_x as usize,
+                                board_y as usize,
+                                '□',
+                                Style::default().fg(Color::White).dim(),
+                            );
+                        }
+                    }
+                }
+            }
+
+            for (block_x, block_y, color) in active_coords {
                 let board_x = square_x + block_x as isize;
                 let board_y = square_y + block_y as isize;
                 if board_x >= 0

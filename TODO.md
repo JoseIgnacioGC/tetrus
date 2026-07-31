@@ -3,7 +3,7 @@
 ### Mechanics
 
 - [x] Implement "next block/s" mechanic.
-- [ ] Implement "ghost block" mechanic.
+- [x] Implement "ghost block" mechanic.
 - [x] Implement "hold block" mechanic.
 - [ ] Implement "combo" mechanic.
 

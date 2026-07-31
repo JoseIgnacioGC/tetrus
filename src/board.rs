@@ -103,7 +103,7 @@ impl Board {
             self.current_square_coord = (pos_x, pos_y);
         } else {
             self.held_block = Some(current);
-            let next_block = *blocks_manager.get_next_block();
+            let next_block = blocks_manager.get_next_block();
             let pos_x = (COLUMNS as isize - next_block.side_len() as isize) / 2;
             let pos_y = 0;
             self.current_block = Some(next_block);

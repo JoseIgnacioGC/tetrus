@@ -2,9 +2,9 @@
 
 ### Mechanics
 
-- [ ] Implement "next block/s" mechanic.
+- [x] Implement "next block/s" mechanic.
 - [ ] Implement "ghost block" mechanic.
-- [ ] Implement "hold block" mechanic.
+- [x] Implement "hold block" mechanic.
 - [ ] Implement "combo" mechanic.
 
 ### Others

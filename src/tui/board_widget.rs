@@ -21,9 +21,9 @@ pub enum BoardState {
 
 pub struct BoardWidget {
     pub board: Board,
+    pub blocks_manager: BlocksManager,
 
     tick_interval: Duration,
-    blocks_manager: BlocksManager,
     last_tick: Instant,
     acc_time: Duration,
 }
@@ -110,7 +110,7 @@ impl BoardWidget {
 
         if !self.board.is_block_falling {
             let block = self.blocks_manager.get_next_block();
-            if !self.board.spawn_next_block(block) {
+            if !self.board.spawn_next_block(&block) {
                 self.board.timer.pause();
                 return BoardState::GameOver;
             };

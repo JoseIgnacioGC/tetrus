@@ -1,10 +1,4 @@
-use ratatui::{
-    buffer::Buffer,
-    layout::Rect,
-    macros::text,
-    style::Style,
-    widgets::Widget,
-};
+use ratatui::{buffer::Buffer, layout::Rect, macros::text, style::Style, widgets::Widget};
 
 use crate::{
     blocks::{Block, Rotation},
@@ -33,11 +27,11 @@ impl Widget for &HeldBlockWidget {
         if let Some(block) = self.held_block {
             let block_width = block.side_len() * 2;
             let start_x = area.right().saturating_sub(block_width);
-            let start_y = area.y + 3;
+            let start_y = area.y + 4;
 
-            for (bx, by, color) in block.get_coordinates(Rotation::Deg0) {
-                let cell_x = start_x + (bx * 2);
-                let cell_y = start_y + by;
+            for (block_x, block_y, color) in block.get_coordinates(Rotation::Deg0) {
+                let cell_x = start_x + (block_x * 2);
+                let cell_y = start_y + block_y;
 
                 if cell_x + 1 <= area.right() && cell_y < area.bottom() {
                     buf[(cell_x, cell_y)]

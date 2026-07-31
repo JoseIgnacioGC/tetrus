@@ -1,10 +1,4 @@
-use ratatui::{
-    buffer::Buffer,
-    layout::Rect,
-    macros::text,
-    style::Style,
-    widgets::Widget,
-};
+use ratatui::{buffer::Buffer, layout::Rect, macros::text, style::Style, widgets::Widget};
 
 use crate::{
     blocks::{Block, Rotation},
@@ -34,7 +28,7 @@ impl Widget for &NextBlocksWidget {
 
         for (i, &block) in self.next_blocks.iter().enumerate() {
             let start_x = area.x;
-            let start_y = area.y + 3 + (i as u16 * 3);
+            let start_y = area.y + 4 + (i as u16 * 3);
 
             for (bx, by, color) in block.get_coordinates(Rotation::Deg0) {
                 let cell_x = start_x + (bx * 2);

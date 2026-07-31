@@ -33,6 +33,15 @@ impl Rotation {
             Self::Deg270 => Self::Deg180,
         }
     }
+
+    pub fn rotate_180(self) -> Self {
+        match self {
+            Self::Deg0 => Self::Deg180,
+            Self::Deg90 => Self::Deg270,
+            Self::Deg180 => Self::Deg0,
+            Self::Deg270 => Self::Deg90,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, EnumCount, VariantArray)]

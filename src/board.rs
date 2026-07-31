@@ -134,6 +134,7 @@ impl Board {
             KeyCode::Char('z') | KeyCode::Char('Z') => {
                 self.current_rotation.rotate_counter_clockwise()
             }
+            KeyCode::Char('a') | KeyCode::Char('A') => self.current_rotation.rotate_180(),
             _ => self.current_rotation.rotate_clockwise(),
         };
 

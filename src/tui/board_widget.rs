@@ -73,7 +73,9 @@ impl BoardWidget {
             | KeyCode::Char('z')
             | KeyCode::Char('Z')
             | KeyCode::Char('x')
-            | KeyCode::Char('X') => {
+            | KeyCode::Char('X')
+            | KeyCode::Char('a')
+            | KeyCode::Char('A') => {
                 let _ = self.board.rotate_block(event.code);
                 BoardState::Pass
             }

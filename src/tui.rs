@@ -153,7 +153,7 @@ impl<'a> Game<'a> {
             "Use ",
             "[←↓→]".cyan(),
             " move ".dim(),
-            "[z][x]".cyan(),
+            "[z][x][a]".cyan(),
             " rotate ".dim(),
             "[c]".cyan(),
             " hold ".dim(),

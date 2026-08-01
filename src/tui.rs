@@ -22,10 +22,11 @@ use crate::{
 };
 use ratatui::{
     macros::{constraint, horizontal, line, vertical},
-    style::Stylize,
+    style::{Color, Stylize},
     text::Line,
     DefaultTerminal, Frame,
 };
+use tachyonfx::{fx, EffectRenderer, Interpolation};
 
 use crossterm::event::{poll, read};
 use std::{io, time::Duration};
@@ -153,7 +154,7 @@ impl<'a> Game<'a> {
             "Use ",
             "[←↓→]".cyan(),
             " move ".dim(),
-            "[z][x][a]".cyan(),
+            "[z][x]".cyan(),
             " rotate ".dim(),
             "[c]".cyan(),
             " hold ".dim(),
@@ -174,12 +175,26 @@ impl<'a> Game<'a> {
             vertical![*= 1, == 3, == ROWS, *= 1].areas(frame.area());
         let [left_area, board_area, next_blocks_area] =
             horizontal![*= 1, == COLUMNS * 2 + 3, *= 1].areas(game_area);
-        let [hold_area, metrics_area] = vertical![*= 1, == 8].areas(left_area);
+        let [hold_area, movement_area, metrics_area] = vertical![*= 1, *= 1, == 8].areas(left_area);
 
         frame.render_widget(
             &self.title,
             title_area.centered_vertically(constraint!(== 1)),
         );
+
+        if let Some((movement, elapsed)) = self.board_widget.board.last_movement() {
+            let movement_text = Line::from(movement).white().bold().right_aligned();
+            let target_area = movement_area.centered_vertically(constraint!(== 1));
+            frame.render_widget(movement_text, target_area);
+
+            let delay = Duration::from_millis(500);
+            if elapsed > delay {
+                let effect_elapsed = elapsed - delay;
+                let mut effect =
+                    fx::fade_to_fg(Color::Rgb(50, 50, 50), (1000, Interpolation::CubicOut));
+                frame.render_effect(&mut effect, target_area, effect_elapsed.into());
+            }
+        }
 
         self.metrics_widget.copy_metrics(&self.board_widget.board);
         frame.render_widget(&self.metrics_widget, metrics_area);

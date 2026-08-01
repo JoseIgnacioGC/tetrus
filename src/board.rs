@@ -12,7 +12,7 @@ use ratatui::{
     widgets::Widget,
 };
 
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 pub type Coords = (u16, u16, Color);
 
@@ -39,6 +39,8 @@ pub struct Board {
     pub current_rotation: Rotation,
     pub held_block: Option<Block>,
     pub can_hold: bool,
+    pub last_movement: &'static str,
+    pub last_movement_timer: Option<Instant>,
 
     board: [[Option<Color>; COLUMNS as usize]; ROWS as usize],
     current_block: Option<Block>,
@@ -68,6 +70,8 @@ impl Board {
         self.current_square_coord = (0, 0);
         self.held_block = None;
         self.can_hold = true;
+        self.last_movement = "";
+        self.last_movement_timer = None;
 
         self.timer.reset();
         self.timer.start();
@@ -262,8 +266,23 @@ impl Board {
             self.board[y] = [None; COLUMNS as usize];
         }
 
+        if cleared > 0 {
+            self.last_movement = MOVEMENT_SETS[cleared.min(4)].0;
+            self.last_movement_timer = Some(Instant::now());
+        }
+
         self.score += MOVEMENT_SETS[cleared].1 * self.level;
         self.cleaned_lines += cleared;
+    }
+
+    pub fn last_movement(&self) -> Option<(&str, Duration)> {
+        if let Some(timer) = self.last_movement_timer {
+            let elapsed = timer.elapsed();
+            if elapsed < Duration::from_millis(1500) {
+                return Some((self.last_movement, elapsed));
+            }
+        }
+        None
     }
 
     fn update_level(&mut self) {

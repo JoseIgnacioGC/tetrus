@@ -8,3 +8,4 @@ crossterm = "0.29.0"
 rand = "0.10.2"
 ratatui = "0.30.2"
 strum = { version = "0.28.0", features = ["derive"] }
+tachyonfx = "0.25.1"

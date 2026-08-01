@@ -1,6 +1,8 @@
 mod blocks;
 mod blocks_manager;
 mod board;
+mod colors;
+mod constants;
 mod tui;
 mod utils;
 

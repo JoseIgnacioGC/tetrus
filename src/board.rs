@@ -1,7 +1,9 @@
 use crate::{
     blocks::{Block, Rotation},
     blocks_manager::BlocksManager,
-    tui::{COLUMNS, ROWS},
+    constants::{
+        COLUMNS, GOAL_MULTIPLIER, LOCK_DELAY_DURATION, MAX_FALL_SPEED_LEVEL, MAX_LOCK_RESETS, ROWS,
+    },
     utils::timer::Timer,
 };
 use crossterm::event::KeyCode;
@@ -11,15 +13,9 @@ use ratatui::{
     style::{Color, Style},
     widgets::Widget,
 };
-
 use std::time::{Duration, Instant};
 
 pub type Coords = (u16, u16, Color);
-
-pub const GOAL_MULTIPLIER: usize = 5;
-pub const LOCK_DELAY_DURATION: Duration = Duration::from_millis(500);
-pub const MAX_LOCK_RESETS: usize = 15;
-const MAX_FALL_SPEED_LEVEL: usize = 20;
 
 #[derive(Default)]
 pub struct Board {
@@ -85,12 +81,11 @@ impl Board {
 
     pub fn pause(&mut self) {
         if self.is_paused {
-            self.is_paused = false;
             self.timer.start();
         } else {
-            self.is_paused = true;
             self.timer.pause();
         }
+        self.is_paused = !self.is_paused;
     }
 
     pub fn get_ghost_coord(&self) -> Option<(isize, isize)> {

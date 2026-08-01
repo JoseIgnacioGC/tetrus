@@ -9,16 +9,13 @@ mod debug_widget;
 
 #[cfg(debug_assertions)]
 use crate::tui::debug_widget::DebugWidget;
-use crate::{
-    blocks,
-    tui::{
-        board_widget::{BoardState, BoardWidget},
-        gameover_widget::{GameoverState, GameoverWidget},
-        held_block_widget::HeldBlockWidget,
-        menu_widget::{MenuState, MenuWidget},
-        metrics_widget::MetricsWidget,
-        next_blocks_widget::NextBlocksWidget,
-    },
+use crate::tui::{
+    board_widget::{BoardState, BoardWidget},
+    gameover_widget::{GameoverState, GameoverWidget},
+    held_block_widget::HeldBlockWidget,
+    menu_widget::{MenuState, MenuWidget},
+    metrics_widget::MetricsWidget,
+    next_blocks_widget::NextBlocksWidget,
 };
 use ratatui::{
     macros::{constraint, horizontal, line, vertical},
@@ -31,8 +28,10 @@ use tachyonfx::{fx, EffectRenderer, Interpolation};
 use crossterm::event::{poll, read};
 use std::{io, time::Duration};
 
-pub const COLUMNS: u16 = 10;
-pub const ROWS: u16 = 22;
+use crate::{
+    colors::{GOLD, ORANGE},
+    constants::{COLUMNS, ROWS},
+};
 
 #[derive(PartialEq, Clone, Copy)]
 pub enum GameState {
@@ -60,7 +59,7 @@ impl<'a> Game<'a> {
     pub fn new() -> Self {
         let title = line![
             "T".red(),
-            "E".fg(blocks::ORANGE),
+            "E".fg(ORANGE),
             "T".yellow(),
             "R".green(),
             "U".cyan(),
@@ -186,14 +185,13 @@ impl<'a> Game<'a> {
             vertical![== 1, == 1].areas(movement_area.centered_vertically(constraint!(== 2)));
 
         if let Some((movement, elapsed)) = self.board_widget.board.last_movement() {
-            let gold = Color::Rgb(255, 215, 0);
             let movement_text = if let Some(rest) = movement.strip_prefix("B2B ") {
                 let rest_span = if rest.contains("T-Spin") {
                     Span::from(rest.to_string()).magenta().bold()
                 } else {
                     Span::from(rest.to_string()).white().bold()
                 };
-                Line::from(vec!["B2B ".fg(gold).bold(), rest_span]).right_aligned()
+                Line::from(vec!["B2B ".fg(GOLD).bold(), rest_span]).right_aligned()
             } else if movement.contains("T-Spin") {
                 Line::from(movement).magenta().bold().right_aligned()
             } else {

@@ -1,5 +1,6 @@
 use crate::{
-    board::{Board, GOAL_MULTIPLIER},
+    board::Board,
+    constants::GOAL_MULTIPLIER,
     utils::integer_format::{to_superscript, to_superscript_with_separator},
 };
 use ratatui::{

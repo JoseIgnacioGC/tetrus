@@ -2,9 +2,7 @@ use ratatui::style::Color;
 
 use strum::{EnumCount, VariantArray};
 
-use crate::board::Coords;
-
-pub const ORANGE: Color = Color::Rgb(255, 127, 0);
+use crate::{board::Coords, colors::ORANGE};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Rotation {

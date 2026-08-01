@@ -44,7 +44,7 @@ impl Rotation {
     }
 }
 
-#[derive(Debug, Clone, Copy, EnumCount, VariantArray)]
+#[derive(Debug, Clone, Copy, EnumCount, VariantArray, PartialEq, Eq)]
 pub enum Block {
     Square,
     T,

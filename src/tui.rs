@@ -23,7 +23,7 @@ use crate::{
 use ratatui::{
     macros::{constraint, horizontal, line, vertical},
     style::{Color, Stylize},
-    text::Line,
+    text::{Line, Span},
     DefaultTerminal, Frame,
 };
 use tachyonfx::{fx, EffectRenderer, Interpolation};
@@ -186,7 +186,19 @@ impl<'a> Game<'a> {
             vertical![== 1, == 1].areas(movement_area.centered_vertically(constraint!(== 2)));
 
         if let Some((movement, elapsed)) = self.board_widget.board.last_movement() {
-            let movement_text = Line::from(movement).white().bold().right_aligned();
+            let gold = Color::Rgb(255, 215, 0);
+            let movement_text = if let Some(rest) = movement.strip_prefix("B2B ") {
+                let rest_span = if rest.contains("T-Spin") {
+                    Span::from(rest.to_string()).magenta().bold()
+                } else {
+                    Span::from(rest.to_string()).white().bold()
+                };
+                Line::from(vec!["B2B ".fg(gold).bold(), rest_span]).right_aligned()
+            } else if movement.contains("T-Spin") {
+                Line::from(movement).magenta().bold().right_aligned()
+            } else {
+                Line::from(movement).white().bold().right_aligned()
+            };
             frame.render_widget(movement_text, movement_title_area);
 
             let delay = Duration::from_millis(500);

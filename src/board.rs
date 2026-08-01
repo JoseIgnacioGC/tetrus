@@ -17,18 +17,9 @@ use std::time::{Duration, Instant};
 pub type Coords = (u16, u16, Color);
 
 pub const GOAL_MULTIPLIER: usize = 5;
-pub const MOVEMENT_SETS: [(&str, usize); 5] = [
-    ("", 0),
-    ("single", 100),
-    ("double", 300),
-    ("triple", 500),
-    ("quad", 800),
-];
-
-const MAX_FALL_SPEED_LEVEL: usize = 20;
-
 pub const LOCK_DELAY_DURATION: Duration = Duration::from_millis(500);
 pub const MAX_LOCK_RESETS: usize = 15;
+const MAX_FALL_SPEED_LEVEL: usize = 20;
 
 #[derive(Default)]
 pub struct Board {
@@ -48,6 +39,8 @@ pub struct Board {
     pub combo_timer: Option<Instant>,
     pub lock_delay_timer: Option<Instant>,
     pub lock_resets: usize,
+    pub last_action_was_rotation: bool,
+    pub is_b2b: bool,
 
     board: [[Option<Color>; COLUMNS as usize]; ROWS as usize],
     current_block: Option<Block>,
@@ -83,6 +76,8 @@ impl Board {
         self.combo_timer = None;
         self.lock_delay_timer = None;
         self.lock_resets = 0;
+        self.last_action_was_rotation = false;
+        self.is_b2b = false;
 
         self.timer.reset();
         self.timer.start();
@@ -172,6 +167,7 @@ impl Board {
             if self.can_place(block, test_coord, next_rotation) {
                 self.current_square_coord = test_coord;
                 self.current_rotation = next_rotation;
+                self.last_action_was_rotation = true;
                 self.update_lock_delay_on_move();
                 return true;
             }
@@ -195,6 +191,7 @@ impl Board {
         self.can_hold = true;
         self.lock_delay_timer = None;
         self.lock_resets = 0;
+        self.last_action_was_rotation = false;
 
         self.update_metrics();
 
@@ -215,6 +212,7 @@ impl Board {
 
         if self.can_place(block, (next_x, y), self.current_rotation) {
             self.current_square_coord = (next_x, y);
+            self.last_action_was_rotation = false;
             self.update_lock_delay_on_move();
         }
     }
@@ -238,18 +236,54 @@ impl Board {
         }
     }
 
+    pub fn detect_t_spin(&self) -> bool {
+        let Some(block) = self.current_block else {
+            return false;
+        };
+        if block != Block::T || !self.last_action_was_rotation {
+            return false;
+        }
+
+        let (x, y) = self.current_square_coord;
+        let center_x = x + 1;
+        let center_y = y + 1;
+
+        let corners = [
+            (center_x - 1, center_y - 1),
+            (center_x + 1, center_y - 1),
+            (center_x - 1, center_y + 1),
+            (center_x + 1, center_y + 1),
+        ];
+
+        let mut occupied_corners = 0;
+        for (cx, cy) in corners {
+            if cx < 0
+                || cx >= COLUMNS as isize
+                || cy < 0
+                || cy >= ROWS as isize
+                || (cy >= 0 && self.board[cy as usize][cx as usize].is_some())
+            {
+                occupied_corners += 1;
+            }
+        }
+
+        occupied_corners >= 3
+    }
+
+    pub fn is_board_empty(&self) -> bool {
+        self.board.iter().all(|row| row.iter().all(Option::is_none))
+    }
+
     pub fn lock_current_block(&mut self) {
         let Some(block) = self.current_block else {
             return;
         };
+        let is_t_spin = self.detect_t_spin();
         let (x, y) = self.current_square_coord;
         for (block_x, block_y, color) in block.get_coordinates(self.current_rotation) {
             let board_x = x + block_x as isize;
             let board_y = y + block_y as isize;
-            if board_x >= 0
-                && board_x < COLUMNS as isize
-                && board_y >= 0
-                && board_y < ROWS as isize
+            if board_x >= 0 && board_x < COLUMNS as isize && board_y >= 0 && board_y < ROWS as isize
             {
                 self.board[board_y as usize][board_x as usize] = Some(color);
             }
@@ -258,7 +292,7 @@ impl Board {
         self.is_block_falling = false;
         self.lock_delay_timer = None;
         self.lock_resets = 0;
-        self.clear_lines();
+        self.clear_lines_with_tspin(is_t_spin);
     }
 
     pub fn check_lock_delay(&mut self) {
@@ -285,6 +319,7 @@ impl Board {
 
         if self.can_place(block, next_pos, self.current_rotation) {
             self.current_square_coord = next_pos;
+            self.last_action_was_rotation = false;
             if self.is_grounded() {
                 if self.lock_delay_timer.is_none() {
                     self.lock_delay_timer = Some(Instant::now());
@@ -316,7 +351,7 @@ impl Board {
             })
     }
 
-    fn clear_lines(&mut self) {
+    fn clear_lines_with_tspin(&mut self, is_t_spin: bool) {
         let mut cleared = 0;
 
         for y in (0..ROWS as usize).rev() {
@@ -331,10 +366,93 @@ impl Board {
             self.board[y] = [None; COLUMNS as usize];
         }
 
-        if cleared > 0 {
-            self.last_movement = MOVEMENT_SETS[cleared.min(4)].0;
-            self.last_movement_timer = Some(Instant::now());
+        let is_perfect_clear = cleared > 0 && self.is_board_empty();
+        let is_difficult = cleared == 4 || (is_t_spin && cleared > 0);
 
+        let mut base_score = 0;
+        let mut movement_name: &'static str = "";
+
+        if is_t_spin {
+            match cleared {
+                0 => {
+                    base_score = 400;
+                    movement_name = "T-Spin";
+                }
+                1 => {
+                    base_score = 800;
+                    movement_name = if self.is_b2b {
+                        "B2B T-Spin Single"
+                    } else {
+                        "T-Spin Single"
+                    };
+                }
+                2 => {
+                    base_score = 1200;
+                    movement_name = if self.is_b2b {
+                        "B2B T-Spin Double"
+                    } else {
+                        "T-Spin Double"
+                    };
+                }
+                3 => {
+                    base_score = 1600;
+                    movement_name = if self.is_b2b {
+                        "B2B T-Spin Triple"
+                    } else {
+                        "T-Spin Triple"
+                    };
+                }
+                _ => {}
+            }
+        } else {
+            match cleared {
+                1 => {
+                    base_score = 100;
+                    movement_name = "single";
+                }
+                2 => {
+                    base_score = 300;
+                    movement_name = "double";
+                }
+                3 => {
+                    base_score = 500;
+                    movement_name = "triple";
+                }
+                4 => {
+                    base_score = 800;
+                    movement_name = if self.is_b2b { "B2B quad" } else { "quad" };
+                }
+                _ => {}
+            }
+        }
+
+        if is_difficult {
+            if self.is_b2b {
+                base_score = (base_score as f64 * 1.5) as usize;
+            }
+            self.is_b2b = true;
+        } else if cleared > 0 {
+            self.is_b2b = false;
+        }
+
+        if is_perfect_clear {
+            let pc_bonus = match cleared {
+                1 => 800,
+                2 => 1200,
+                3 => 1800,
+                4 => 2000,
+                _ => 2000,
+            };
+            base_score += pc_bonus;
+            movement_name = "Perfect Clear!";
+        }
+
+        if !movement_name.is_empty() {
+            self.last_movement = movement_name;
+            self.last_movement_timer = Some(Instant::now());
+        }
+
+        if cleared > 0 {
             if self.combo_count > 0 {
                 let combo_bonus = 50 * self.combo_count * self.level;
                 self.score += combo_bonus;
@@ -345,7 +463,7 @@ impl Board {
             self.combo_count = 0;
         }
 
-        self.score += MOVEMENT_SETS[cleared].1 * self.level;
+        self.score += base_score * self.level;
         self.cleaned_lines += cleared;
     }
 

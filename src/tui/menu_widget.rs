@@ -27,7 +27,7 @@ impl<'a> MenuWidget<'a> {
         Self {
             title,
             option_index: 0,
-            menu_options: ["play".into(), "quit".into()],
+            menu_options: ["endless".into(), "quit".into()],
         }
     }
 

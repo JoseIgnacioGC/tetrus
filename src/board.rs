@@ -27,6 +27,9 @@ pub const MOVEMENT_SETS: [(&str, usize); 5] = [
 
 const MAX_FALL_SPEED_LEVEL: usize = 20;
 
+pub const LOCK_DELAY_DURATION: Duration = Duration::from_millis(500);
+pub const MAX_LOCK_RESETS: usize = 15;
+
 #[derive(Default)]
 pub struct Board {
     pub is_block_falling: bool,
@@ -43,6 +46,8 @@ pub struct Board {
     pub last_movement_timer: Option<Instant>,
     pub combo_count: usize,
     pub combo_timer: Option<Instant>,
+    pub lock_delay_timer: Option<Instant>,
+    pub lock_resets: usize,
 
     board: [[Option<Color>; COLUMNS as usize]; ROWS as usize],
     current_block: Option<Block>,
@@ -76,6 +81,8 @@ impl Board {
         self.last_movement_timer = None;
         self.combo_count = 0;
         self.combo_timer = None;
+        self.lock_delay_timer = None;
+        self.lock_resets = 0;
 
         self.timer.reset();
         self.timer.start();
@@ -165,6 +172,7 @@ impl Board {
             if self.can_place(block, test_coord, next_rotation) {
                 self.current_square_coord = test_coord;
                 self.current_rotation = next_rotation;
+                self.update_lock_delay_on_move();
                 return true;
             }
         }
@@ -185,6 +193,8 @@ impl Board {
         self.current_square_coord = (pos_x, pos_y);
         self.is_block_falling = true;
         self.can_hold = true;
+        self.lock_delay_timer = None;
+        self.lock_resets = 0;
 
         self.update_metrics();
 
@@ -205,6 +215,63 @@ impl Board {
 
         if self.can_place(block, (next_x, y), self.current_rotation) {
             self.current_square_coord = (next_x, y);
+            self.update_lock_delay_on_move();
+        }
+    }
+
+    pub fn is_grounded(&self) -> bool {
+        let Some(block) = self.current_block else {
+            return false;
+        };
+        let (x, y) = self.current_square_coord;
+        !self.can_place(block, (x, y + 1), self.current_rotation)
+    }
+
+    fn update_lock_delay_on_move(&mut self) {
+        if self.is_grounded() {
+            if self.lock_resets < MAX_LOCK_RESETS {
+                self.lock_delay_timer = Some(Instant::now());
+                self.lock_resets += 1;
+            }
+        } else {
+            self.lock_delay_timer = None;
+        }
+    }
+
+    pub fn lock_current_block(&mut self) {
+        let Some(block) = self.current_block else {
+            return;
+        };
+        let (x, y) = self.current_square_coord;
+        for (block_x, block_y, color) in block.get_coordinates(self.current_rotation) {
+            let board_x = x + block_x as isize;
+            let board_y = y + block_y as isize;
+            if board_x >= 0
+                && board_x < COLUMNS as isize
+                && board_y >= 0
+                && board_y < ROWS as isize
+            {
+                self.board[board_y as usize][board_x as usize] = Some(color);
+            }
+        }
+        self.current_block = None;
+        self.is_block_falling = false;
+        self.lock_delay_timer = None;
+        self.lock_resets = 0;
+        self.clear_lines();
+    }
+
+    pub fn check_lock_delay(&mut self) {
+        if self.is_grounded() {
+            if let Some(timer) = self.lock_delay_timer {
+                if timer.elapsed() >= LOCK_DELAY_DURATION || self.lock_resets >= MAX_LOCK_RESETS {
+                    self.lock_current_block();
+                }
+            } else {
+                self.lock_delay_timer = Some(Instant::now());
+            }
+        } else {
+            self.lock_delay_timer = None;
         }
     }
 
@@ -218,22 +285,16 @@ impl Board {
 
         if self.can_place(block, next_pos, self.current_rotation) {
             self.current_square_coord = next_pos;
+            if self.is_grounded() {
+                if self.lock_delay_timer.is_none() {
+                    self.lock_delay_timer = Some(Instant::now());
+                }
+            } else {
+                self.lock_delay_timer = None;
+            }
             true
         } else {
-            for (block_x, block_y, color) in block.get_coordinates(self.current_rotation) {
-                let board_x = x + block_x as isize;
-                let board_y = y + block_y as isize;
-                if board_x >= 0
-                    && board_x < COLUMNS as isize
-                    && board_y >= 0
-                    && board_y < ROWS as isize
-                {
-                    self.board[board_y as usize][board_x as usize] = Some(color);
-                }
-            }
-            self.current_block = None;
-            self.is_block_falling = false;
-            self.clear_lines();
+            self.check_lock_delay();
             false
         }
     }

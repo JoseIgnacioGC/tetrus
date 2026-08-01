@@ -1,4 +1,10 @@
-use ratatui::{buffer::Buffer, layout::Rect, macros::text, style::Style, widgets::Widget};
+use ratatui::{
+    buffer::Buffer,
+    layout::Rect,
+    macros::text,
+    style::{Color, Style},
+    widgets::Widget,
+};
 
 use crate::{
     blocks::{Block, Rotation},
@@ -7,15 +13,20 @@ use crate::{
 
 pub struct HeldBlockWidget {
     held_block: Option<Block>,
+    can_hold: bool,
 }
 
 impl HeldBlockWidget {
     pub fn new() -> Self {
-        Self { held_block: None }
+        Self {
+            held_block: None,
+            can_hold: true,
+        }
     }
 
     pub fn copy_metrics(&mut self, board: &Board) {
         self.held_block = board.held_block;
+        self.can_hold = board.can_hold;
     }
 }
 
@@ -34,9 +45,13 @@ impl Widget for &HeldBlockWidget {
                 let cell_y = start_y + block_y;
 
                 if cell_x + 1 <= area.right() && cell_y < area.bottom() {
-                    buf[(cell_x, cell_y)]
-                        .set_char('□')
-                        .set_style(Style::default().fg(color));
+                    let style = if self.can_hold {
+                        Style::default().fg(color)
+                    } else {
+                        Style::default().fg(Color::White).dim()
+                    };
+
+                    buf[(cell_x, cell_y)].set_char('□').set_style(style);
                 }
             }
         }

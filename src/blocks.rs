@@ -76,7 +76,7 @@ impl Block {
         }
     }
 
-    fn base_coordinates(self) -> &'static [(u16, u16); 4] {
+    const fn base_coordinates(self) -> &'static [(u16, u16); 4] {
         match self {
             Self::Square => &[(0, 0), (1, 0), (0, 1), (1, 1)],
             Self::T => &[(1, 0), (0, 1), (1, 1), (2, 1)],

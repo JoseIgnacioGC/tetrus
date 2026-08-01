@@ -9,7 +9,7 @@
 - [x] Rotation controls must map left to 90° counterclockwise and right button to 90° clockwise.
 - [x] 7-Bag Randomizer.
 - [x] Hold Box, allowing only one swap per piece drop.
-- [x] Ghost Piece.
+- [x] Ghost Block.
 - [x] Lock down must use Extended Placement (Infinity), allowing up to 15 movements or rotations on a surface before locking.
 - [x] Level progression must be tied to clearing lines or performing T-Spins, not just time survived.
 - [x] Game Over (Top out) occurs via Block Out (spawning on an existing block) or Lock Out (locking completely above the visible playfield).

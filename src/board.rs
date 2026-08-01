@@ -41,6 +41,8 @@ pub struct Board {
     pub can_hold: bool,
     pub last_movement: &'static str,
     pub last_movement_timer: Option<Instant>,
+    pub combo_count: usize,
+    pub combo_timer: Option<Instant>,
 
     board: [[Option<Color>; COLUMNS as usize]; ROWS as usize],
     current_block: Option<Block>,
@@ -72,6 +74,8 @@ impl Board {
         self.can_hold = true;
         self.last_movement = "";
         self.last_movement_timer = None;
+        self.combo_count = 0;
+        self.combo_timer = None;
 
         self.timer.reset();
         self.timer.start();
@@ -269,6 +273,15 @@ impl Board {
         if cleared > 0 {
             self.last_movement = MOVEMENT_SETS[cleared.min(4)].0;
             self.last_movement_timer = Some(Instant::now());
+
+            if self.combo_count > 0 {
+                let combo_bonus = 50 * self.combo_count * self.level;
+                self.score += combo_bonus;
+            }
+            self.combo_count += 1;
+            self.combo_timer = Some(Instant::now());
+        } else {
+            self.combo_count = 0;
         }
 
         self.score += MOVEMENT_SETS[cleared].1 * self.level;
@@ -280,6 +293,16 @@ impl Board {
             let elapsed = timer.elapsed();
             if elapsed < Duration::from_millis(1500) {
                 return Some((self.last_movement, elapsed));
+            }
+        }
+        None
+    }
+
+    pub fn current_combo(&self) -> Option<(usize, Duration)> {
+        if let Some(timer) = self.combo_timer {
+            let elapsed = timer.elapsed();
+            if elapsed < Duration::from_millis(1500) && self.combo_count > 1 {
+                return Some((self.combo_count - 1, elapsed));
             }
         }
         None

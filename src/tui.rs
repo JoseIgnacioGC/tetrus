@@ -182,17 +182,35 @@ impl<'a> Game<'a> {
             title_area.centered_vertically(constraint!(== 1)),
         );
 
+        let [movement_title_area, combo_area] =
+            vertical![== 1, == 1].areas(movement_area.centered_vertically(constraint!(== 2)));
+
         if let Some((movement, elapsed)) = self.board_widget.board.last_movement() {
             let movement_text = Line::from(movement).white().bold().right_aligned();
-            let target_area = movement_area.centered_vertically(constraint!(== 1));
-            frame.render_widget(movement_text, target_area);
+            frame.render_widget(movement_text, movement_title_area);
 
             let delay = Duration::from_millis(500);
             if elapsed > delay {
                 let effect_elapsed = elapsed - delay;
                 let mut effect =
                     fx::fade_to_fg(Color::Rgb(50, 50, 50), (1000, Interpolation::CubicOut));
-                frame.render_effect(&mut effect, target_area, effect_elapsed.into());
+                frame.render_effect(&mut effect, movement_title_area, effect_elapsed.into());
+            }
+        }
+
+        if let Some((combo_count, elapsed)) = self.board_widget.board.current_combo() {
+            let combo_text = Line::from(format!("{} Combo", combo_count))
+                .white()
+                .bold()
+                .right_aligned();
+            frame.render_widget(combo_text, combo_area);
+
+            let delay = Duration::from_millis(500);
+            if elapsed > delay {
+                let effect_elapsed = elapsed - delay;
+                let mut effect =
+                    fx::fade_to_fg(Color::Rgb(50, 50, 50), (1000, Interpolation::CubicOut));
+                frame.render_effect(&mut effect, combo_area, effect_elapsed.into());
             }
         }
 

@@ -32,7 +32,7 @@
 
 ### Game Modes
 
-- [ ] Endless
+- [x] Endless
 - [ ] 40 Lines
 - [ ] Blitz
 
@@ -47,7 +47,8 @@
 - [x] Implement minimal keyboard instructions in the menu.
 - [x] Implement 180 deg rotation when pressing "a".
 - [x] Implement "delay frames" (Lock Delay).
-- [ ] Improve x axis translation feel (DAS/ARR).
+- [x] Improve x axis translation feel (DAS/ARR).
 - [x] Implement better score system (T-Spin, Back-to-Back, Perfect Clear).
 - [ ] Implement optional (or default) background color.
+- [ ] Implement local stored score system.
 - [ ] Implement display top 5 best scores in game over modal.

@@ -14,7 +14,7 @@ pub enum Rotation {
 }
 
 impl Rotation {
-    pub fn rotate_clockwise(self) -> Self {
+    pub const fn rotate_clockwise(self) -> Self {
         match self {
             Self::Deg0 => Self::Deg90,
             Self::Deg90 => Self::Deg180,
@@ -23,7 +23,7 @@ impl Rotation {
         }
     }
 
-    pub fn rotate_counter_clockwise(self) -> Self {
+    pub const fn rotate_counter_clockwise(self) -> Self {
         match self {
             Self::Deg0 => Self::Deg270,
             Self::Deg90 => Self::Deg0,
@@ -32,7 +32,7 @@ impl Rotation {
         }
     }
 
-    pub fn rotate_180(self) -> Self {
+    pub const fn rotate_180(self) -> Self {
         match self {
             Self::Deg0 => Self::Deg180,
             Self::Deg90 => Self::Deg270,

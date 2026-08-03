@@ -29,6 +29,7 @@
 - [x] Implement "ghost block" mechanic.
 - [x] Implement "hold block" mechanic.
 - [x] Implement "combo" mechanic.
+- [ ] Detect All-spins (L-spin, J-spin, Z-spin, etc.)
 
 ### Game Modes
 

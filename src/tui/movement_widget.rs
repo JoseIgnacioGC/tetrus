@@ -4,7 +4,7 @@ use ratatui::{
     layout::Rect,
     macros::{constraint, vertical},
     style::{Color, Stylize},
-    text::{Line, Span},
+    text::Line,
     Frame,
 };
 use tachyonfx::{fx, EffectRenderer, Interpolation};
@@ -34,27 +34,46 @@ impl MovementWidget {
     }
 
     pub fn render(&self, area: Rect, frame: &mut Frame) {
-        let [movement_title_area, combo_area] =
-            vertical![== 1, == 1].areas(area.centered_vertically(constraint!(== 2)));
+        let [tspin_area, clear_area, b2b_area, combo_area] =
+            vertical![== 1, == 1, == 1, == 1].areas(area.centered_vertically(constraint!(== 4)));
 
         let fade_duration = COMBO_NOTIFICATION_DURATION
             .saturating_sub(COMBO_NOTIFICATION_FADE_DELAY)
             .as_millis() as u32;
 
         if let Some((movement, elapsed)) = self.last_movement {
-            let movement_text = if let Some(rest) = movement.strip_prefix("B2B ") {
-                let rest_span = if rest.contains("T-Spin") {
-                    Span::from(rest.to_string()).magenta().bold()
-                } else {
-                    Span::from(rest.to_string()).white().bold()
-                };
-                Line::from(vec!["B2B ".fg(GOLD).bold(), rest_span]).right_aligned()
-            } else if movement.contains("T-Spin") {
-                Line::from(movement).magenta().bold().right_aligned()
+            let has_b2b = movement.starts_with("B2B ");
+            let rest = movement.strip_prefix("B2B ").unwrap_or(movement);
+            let has_tspin = rest.contains("T-Spin");
+
+            if has_tspin {
+                let text = Line::from("T-SPIN").magenta().bold().right_aligned();
+                frame.render_widget(text, tspin_area);
+            }
+
+            let clear_text = if rest.contains("Single") || rest.contains("single") {
+                Some("SINGLE")
+            } else if rest.contains("Double") || rest.contains("double") {
+                Some("DOUBLE")
+            } else if rest.contains("Triple") || rest.contains("triple") {
+                Some("TRIPLE")
+            } else if rest.contains("Quad") || rest.contains("quad") {
+                Some("QUAD")
+            } else if rest.contains("Perfect Clear") {
+                Some("PERFECT CLEAR!")
             } else {
-                Line::from(movement).white().bold().right_aligned()
+                None
             };
-            frame.render_widget(movement_text, movement_title_area);
+
+            if let Some(clear_str) = clear_text {
+                let text = Line::from(clear_str).white().bold().right_aligned();
+                frame.render_widget(text, clear_area);
+            }
+
+            if has_b2b {
+                let text = Line::from("B2B  x1").fg(GOLD).bold().right_aligned();
+                frame.render_widget(text, b2b_area);
+            }
 
             if elapsed > COMBO_NOTIFICATION_FADE_DELAY {
                 let effect_elapsed = elapsed - COMBO_NOTIFICATION_FADE_DELAY;
@@ -62,7 +81,16 @@ impl MovementWidget {
                     Color::Rgb(50, 50, 50),
                     (fade_duration, Interpolation::CubicOut),
                 );
-                frame.render_effect(&mut effect, movement_title_area, effect_elapsed.into());
+
+                if has_tspin {
+                    frame.render_effect(&mut effect, tspin_area, effect_elapsed.into());
+                }
+                if clear_text.is_some() {
+                    frame.render_effect(&mut effect, clear_area, effect_elapsed.into());
+                }
+                if has_b2b {
+                    frame.render_effect(&mut effect, b2b_area, effect_elapsed.into());
+                }
             }
         }
 

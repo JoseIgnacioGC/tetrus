@@ -2,7 +2,8 @@ use crate::{
     blocks::{Block, Rotation},
     blocks_manager::BlocksManager,
     constants::{
-        COLUMNS, GOAL_MULTIPLIER, LOCK_DELAY_DURATION, MAX_FALL_SPEED_LEVEL, MAX_LOCK_RESETS, ROWS,
+        COLUMNS, COMBO_NOTIFICATION_DURATION, GOAL_MULTIPLIER, LOCK_DELAY_FRAMES_DURATION,
+        MAX_DELAY_FRAMES_LOCK_RESETS, MAX_FALL_SPEED_LEVEL, ROWS,
     },
     utils::timer::Timer,
 };
@@ -222,7 +223,7 @@ impl Board {
 
     fn update_lock_delay_on_move(&mut self) {
         if self.is_grounded() {
-            if self.lock_resets < MAX_LOCK_RESETS {
+            if self.lock_resets < MAX_DELAY_FRAMES_LOCK_RESETS {
                 self.lock_delay_timer = Some(Instant::now());
                 self.lock_resets += 1;
             }
@@ -293,7 +294,9 @@ impl Board {
     pub fn check_lock_delay(&mut self) {
         if self.is_grounded() {
             if let Some(timer) = self.lock_delay_timer {
-                if timer.elapsed() >= LOCK_DELAY_DURATION || self.lock_resets >= MAX_LOCK_RESETS {
+                if timer.elapsed() >= LOCK_DELAY_FRAMES_DURATION
+                    || self.lock_resets >= MAX_DELAY_FRAMES_LOCK_RESETS
+                {
                     self.lock_current_block();
                 }
             } else {
@@ -462,10 +465,10 @@ impl Board {
         self.cleaned_lines += cleared;
     }
 
-    pub fn last_movement(&self) -> Option<(&str, Duration)> {
+    pub fn last_movement(&self) -> Option<(&'static str, Duration)> {
         if let Some(timer) = self.last_movement_timer {
             let elapsed = timer.elapsed();
-            if elapsed < Duration::from_millis(1500) {
+            if elapsed < COMBO_NOTIFICATION_DURATION {
                 return Some((self.last_movement, elapsed));
             }
         }
@@ -475,7 +478,7 @@ impl Board {
     pub fn current_combo(&self) -> Option<(usize, Duration)> {
         if let Some(timer) = self.combo_timer {
             let elapsed = timer.elapsed();
-            if elapsed < Duration::from_millis(1500) && self.combo_count > 1 {
+            if elapsed < COMBO_NOTIFICATION_DURATION && self.combo_count > 1 {
                 return Some((self.combo_count - 1, elapsed));
             }
         }

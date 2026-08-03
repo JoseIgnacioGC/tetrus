@@ -2,6 +2,7 @@ mod board_widget;
 mod held_block_widget;
 mod menu_widget;
 mod metrics_widget;
+mod movement_widget;
 mod next_blocks_widget;
 
 #[cfg(debug_assertions)]
@@ -15,21 +16,21 @@ use crate::tui::{
     held_block_widget::HeldBlockWidget,
     menu_widget::{MenuState, MenuWidget},
     metrics_widget::MetricsWidget,
+    movement_widget::MovementWidget,
     next_blocks_widget::NextBlocksWidget,
 };
 use ratatui::{
     macros::{constraint, horizontal, line, vertical},
-    style::{Color, Stylize},
-    text::{Line, Span},
+    style::Stylize,
+    text::Line,
     DefaultTerminal, Frame,
 };
-use tachyonfx::{fx, EffectRenderer, Interpolation};
 
 use crossterm::event::{poll, read};
 use std::{io, time::Duration};
 
 use crate::{
-    colors::{GOLD, ORANGE},
+    colors::ORANGE,
     constants::{COLUMNS, ROWS},
 };
 
@@ -46,6 +47,7 @@ pub struct Game<'a> {
 
     menu_widget: MenuWidget<'a>,
     metrics_widget: MetricsWidget,
+    movement_widget: MovementWidget,
     board_widget: BoardWidget,
     held_block_widget: HeldBlockWidget,
     next_blocks_widget: NextBlocksWidget,
@@ -73,6 +75,7 @@ impl<'a> Game<'a> {
 
             menu_widget: MenuWidget::new(title),
             metrics_widget: MetricsWidget::new(),
+            movement_widget: MovementWidget::new(),
             board_widget: BoardWidget::new(),
             held_block_widget: HeldBlockWidget::new(),
             next_blocks_widget: NextBlocksWidget::new(),
@@ -181,48 +184,8 @@ impl<'a> Game<'a> {
             title_area.centered_vertically(constraint!(== 1)),
         );
 
-        let [movement_title_area, combo_area] =
-            vertical![== 1, == 1].areas(movement_area.centered_vertically(constraint!(== 2)));
-
-        if let Some((movement, elapsed)) = self.board_widget.board.last_movement() {
-            let movement_text = if let Some(rest) = movement.strip_prefix("B2B ") {
-                let rest_span = if rest.contains("T-Spin") {
-                    Span::from(rest.to_string()).magenta().bold()
-                } else {
-                    Span::from(rest.to_string()).white().bold()
-                };
-                Line::from(vec!["B2B ".fg(GOLD).bold(), rest_span]).right_aligned()
-            } else if movement.contains("T-Spin") {
-                Line::from(movement).magenta().bold().right_aligned()
-            } else {
-                Line::from(movement).white().bold().right_aligned()
-            };
-            frame.render_widget(movement_text, movement_title_area);
-
-            let delay = Duration::from_millis(500);
-            if elapsed > delay {
-                let effect_elapsed = elapsed - delay;
-                let mut effect =
-                    fx::fade_to_fg(Color::Rgb(50, 50, 50), (1000, Interpolation::CubicOut));
-                frame.render_effect(&mut effect, movement_title_area, effect_elapsed.into());
-            }
-        }
-
-        if let Some((combo_count, elapsed)) = self.board_widget.board.current_combo() {
-            let combo_text = Line::from(format!("{} Combo", combo_count))
-                .white()
-                .bold()
-                .right_aligned();
-            frame.render_widget(combo_text, combo_area);
-
-            let delay = Duration::from_millis(500);
-            if elapsed > delay {
-                let effect_elapsed = elapsed - delay;
-                let mut effect =
-                    fx::fade_to_fg(Color::Rgb(50, 50, 50), (1000, Interpolation::CubicOut));
-                frame.render_effect(&mut effect, combo_area, effect_elapsed.into());
-            }
-        }
+        self.movement_widget.copy_metrics(&self.board_widget.board);
+        self.movement_widget.render(movement_area, frame);
 
         self.metrics_widget.copy_metrics(&self.board_widget.board);
         frame.render_widget(&self.metrics_widget, metrics_area);

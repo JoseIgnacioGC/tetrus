@@ -36,6 +36,15 @@
 - [ ] 40 Lines
 - [ ] Blitz
 
+### Architecture
+
+- [ ] Refactor Board, too much attributes (use enums, newtypes and typestates. To make that impossible logical states impossible).
+
+### Controls
+
+- [ ] Implement reload current game (game mode) after hold "r" for x seconds (display a message/modal that warn and inform about that you need to hold "r" while you press "r").
+- [ ] Improve "esc" quit behavior, you should be able to quit in any moment if you hold "esc" for x seconds (display a message/modal while holding "esc" to show progress).
+
 ### Others
 
 - [x] Implement an initial menu.

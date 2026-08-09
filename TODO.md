@@ -5,21 +5,19 @@
 - [x] The I and O pieces must spawn in the exact center columns.
 - [x] The J, L, S, T, and Z pieces must spawn in the left-middle columns.
 - [x] All pieces must spawn horizontally.
-- [x] Super Rotation System (SRS) for rotation and wall kicks.
-- [x] Rotation controls must map left to 90° counterclockwise and right button to 90° clockwise.
+- [x] SRS and wall kicks.
+- [x] Rotation controls must make use of 90° counterclockwise and 90° clockwise.
 - [x] 7-Bag Randomizer.
 - [x] Hold Box, allowing only one swap per piece drop.
 - [x] Ghost Block.
-- [x] Lock down must use Extended Placement (Infinity), allowing up to 15 movements or rotations on a surface before locking.
-- [x] Level progression must be tied to clearing lines or performing T-Spins, not just time survived.
-- [x] Game Over (Top out) occurs via Block Out (spawning on an existing block) or Lock Out (locking completely above the visible playfield).
-- [x] The game should display upcoming pieces in a Next Piece Queue (strongly recommended up to 6 pieces).
-- [x] The engine should recognize and reward T-Spins (Minis, Singles, Doubles, and Triples).
-- [x] Chaining difficult line clears (T-Spins or Tetrises) should grant a Back-to-Back Bonus.
-- [x] The game should feature a Combo System that rewards clearing lines on consecutive piece drops.
-- [ ] Delayed Auto Shift (DAS) and Auto Repeat Rate (ARR) must be tuned to standard comfortable thresholds.
-
----
+- [x] Lock down must use Extended Placement (Infinity).
+- [x] Level progression must be tied to clearing lines.
+- [x] Game Over occurs via Block Out or Lock Out .
+- [x] The display upcoming pieces.
+- [x] Reward T-Spins (Minis, Singles, Doubles, and Triples).
+- [x] Back-to-Back Bonus.
+- [x] Combo System.
+- [ ] DAS and ARR.
 
 # Essentials
 
@@ -50,6 +48,12 @@
 
 - [x] Implement an initial menu.
 - [x] Implement a "game over" screen & "try again" option.
+- [ ] Implement a debug-only constructor method for BlocksManager that accepts a seed as parameter.
+
+### Github
+
+- [ ] Publish release binaries for linux and windows.
+- [ ] Implement a vhs script to record demos.
 
 # Maybe
 

@@ -47,9 +47,9 @@ impl MetricsWidget {
 
     pub fn copy_metrics(&mut self, board: &Board) {
         self.format_instant(&board.timer.elapsed());
-        self.level = board.level;
-        self.cleaned_lines = board.cleaned_lines;
-        self.score = board.score;
+        self.level = board.stats.level;
+        self.cleaned_lines = board.stats.cleaned_lines;
+        self.score = board.stats.score;
     }
 }
 

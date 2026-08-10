@@ -49,7 +49,7 @@ impl BoardWidget {
     }
 
     pub fn handle_key_event(&mut self, event: KeyEvent) -> BoardState {
-        if self.board.is_paused {
+        if self.board.is_paused() {
             return match event.code {
                 KeyCode::Enter | KeyCode::Char('p') | KeyCode::Char('P') => {
                     self.board.pause();
@@ -103,7 +103,7 @@ impl BoardWidget {
         let delta_time = current_time.duration_since(self.last_tick);
         self.last_tick = current_time;
 
-        if self.board.is_paused {
+        if self.board.is_paused() {
             let elapsed = current_time.elapsed();
             if elapsed < self.tick_interval {
                 std::thread::sleep(self.tick_interval - elapsed);
@@ -114,7 +114,7 @@ impl BoardWidget {
 
         self.acc_time += delta_time;
 
-        if !self.board.is_block_falling {
+        if !self.board.is_block_falling() {
             let block = self.blocks_manager.get_next_block();
             if !self.board.spawn_next_block(&block) {
                 self.board.timer.pause();
@@ -122,8 +122,8 @@ impl BoardWidget {
             };
         }
 
-        while self.acc_time >= self.board.fall_speed {
-            self.acc_time -= self.board.fall_speed;
+        while self.acc_time >= self.board.stats.fall_speed {
+            self.acc_time -= self.board.stats.fall_speed;
             let _ = self.board.move_block_down_or_set();
         }
 
@@ -142,7 +142,7 @@ impl Widget for &BoardWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
         self.board.render(area, buf);
 
-        if self.board.is_paused {
+        if self.board.is_paused() {
             let block_area = area.centered(constraint!(== 50%), constraint!(== 5));
             let text_area = block_area
                 .inner(Margin::new(1, 1))

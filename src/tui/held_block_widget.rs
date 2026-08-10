@@ -25,8 +25,8 @@ impl HeldBlockWidget {
     }
 
     pub fn copy_metrics(&mut self, board: &Board) {
-        self.held_block = board.held_block;
-        self.can_hold = board.can_hold;
+        self.held_block = board.hold_state.block;
+        self.can_hold = board.hold_state.can_hold;
     }
 }
 

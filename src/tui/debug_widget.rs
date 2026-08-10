@@ -33,8 +33,8 @@ impl DebugWidget {
     }
 
     pub fn copy_metrics(&mut self, board: &Board) {
-        self.fall_speed = board.fall_speed.as_secs_f32();
-        self.rotation = board.current_rotation;
+        self.fall_speed = board.stats.fall_speed.as_secs_f32();
+        self.rotation = board.current_rotation();
     }
 }
 

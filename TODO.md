@@ -37,26 +37,27 @@
 
 ### Architecture
 
-- [ ] Refactor Board, too much attributes (use enums, newtypes and typestates. To make that impossible logical states impossible).
+- [x] Refactor Board, too much attributes (use enums, newtypes and typestates. To make that impossible logical states impossible).
 
 ### Controls
 
 - [ ] Implement reload current game (game mode) after hold "r" for x seconds (display a message/modal that warn and inform about that you need to hold "r" while you press "r").
 - [ ] Improve "esc" quit behavior, you should be able to quit in any moment if you hold "esc" for x seconds (display a message/modal while holding "esc" to show progress).
 
+### Github
+
+# Fix
+
+- [x] b2b is not accumulating beyond x1 (tested across multiple consecutive quads)
+
+- [ ] Publish release binaries for linux and windows.
+- [ ] Implement a vhs script to record demos.
+
 ### Others
 
 - [x] Implement an initial menu.
 - [x] Implement a "game over" screen & "try again" option.
 - [x] Implement a debug-only constructor method for BlocksManager that accepts a seed as parameter.
-
-### Github
-
-- [ ] Publish release binaries for linux and windows.
-- [ ] Implement a vhs script to record demos.
-
-# Maybe
-
 - [x] Implement visual display of "combo name" messages.
 - [x] Implement minimal keyboard instructions in the menu.
 - [x] Implement 180 deg rotation when pressing "a".

@@ -16,7 +16,7 @@ use crate::{
 };
 
 pub struct MovementWidget {
-    last_movement: Option<(&'static str, Duration)>,
+    last_movement: Option<(&'static str, usize, Duration)>,
     combo: Option<(usize, Duration)>,
 }
 
@@ -41,7 +41,7 @@ impl MovementWidget {
             .saturating_sub(COMBO_NOTIFICATION_FADE_DELAY)
             .as_millis() as u32;
 
-        if let Some((movement, elapsed)) = self.last_movement {
+        if let Some((movement, b2b_count, elapsed)) = self.last_movement {
             let has_b2b = movement.starts_with("B2B ");
             let rest = movement.strip_prefix("B2B ").unwrap_or(movement);
             let has_tspin = rest.contains("T-Spin");
@@ -71,7 +71,10 @@ impl MovementWidget {
             }
 
             if has_b2b {
-                let text = Line::from("B2B  x1").fg(GOLD).bold().right_aligned();
+                let text = Line::from(format!("B2B  x{}", b2b_count.max(1)))
+                    .fg(GOLD)
+                    .bold()
+                    .right_aligned();
                 frame.render_widget(text, b2b_area);
             }
 

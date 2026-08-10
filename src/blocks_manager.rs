@@ -1,6 +1,6 @@
 use crate::blocks::Block;
 
-use rand::{rngs::SmallRng, seq::SliceRandom};
+use rand::{rngs::SmallRng, seq::SliceRandom, SeedableRng};
 use strum::{EnumCount, VariantArray};
 
 pub struct BlocksManager {
@@ -25,6 +25,35 @@ impl BlocksManager {
             current_index: 0,
             rng,
         }
+    }
+
+    #[cfg(debug_assertions)]
+    pub fn with_seed(seed: u64) -> Self {
+        let mut rng = SmallRng::seed_from_u64(seed);
+        let mut bag_1: [Block; Block::COUNT] = Block::VARIANTS.try_into().unwrap();
+        let mut bag_2: [Block; Block::COUNT] = Block::VARIANTS.try_into().unwrap();
+
+        bag_1.shuffle(&mut rng);
+        bag_2.shuffle(&mut rng);
+
+        Self {
+            bags: [bag_1, bag_2],
+            active_bag: 0,
+            current_index: 0,
+            rng,
+        }
+    }
+
+    pub fn reset(&mut self) {
+        let mut bag_1: [Block; Block::COUNT] = Block::VARIANTS.try_into().unwrap();
+        let mut bag_2: [Block; Block::COUNT] = Block::VARIANTS.try_into().unwrap();
+
+        bag_1.shuffle(&mut self.rng);
+        bag_2.shuffle(&mut self.rng);
+
+        self.bags = [bag_1, bag_2];
+        self.active_bag = 0;
+        self.current_index = 0;
     }
 
     pub fn get_next_block(&mut self) -> Block {

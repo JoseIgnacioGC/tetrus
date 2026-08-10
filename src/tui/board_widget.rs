@@ -45,7 +45,7 @@ impl BoardWidget {
         self.board.new_game();
         self.last_tick = Instant::now();
         self.acc_time = Duration::ZERO;
-        self.blocks_manager = BlocksManager::new();
+        self.blocks_manager.reset();
     }
 
     pub fn handle_key_event(&mut self, event: KeyEvent) -> BoardState {

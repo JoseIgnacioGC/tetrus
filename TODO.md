@@ -48,7 +48,7 @@
 
 - [x] Implement an initial menu.
 - [x] Implement a "game over" screen & "try again" option.
-- [ ] Implement a debug-only constructor method for BlocksManager that accepts a seed as parameter.
+- [x] Implement a debug-only constructor method for BlocksManager that accepts a seed as parameter.
 
 ### Github
 
@@ -66,3 +66,7 @@
 - [ ] Implement optional (or default) background color.
 - [ ] Implement local stored score system.
 - [ ] Implement display top 5 best scores in game over modal.
+
+# Fix
+
+- [ ] b2b is not accumulating beyond x1 (tested across multiple consecutive quads)

@@ -46,12 +46,8 @@
 
 ### Github
 
-# Fix
-
-- [x] b2b is not accumulating beyond x1 (tested across multiple consecutive quads)
-
 - [ ] Publish release binaries for linux and windows.
-- [ ] Implement a vhs script to record demos.
+- [x] Implement a vhs script to record demos.
 
 ### Others
 
@@ -70,4 +66,4 @@
 
 # Fix
 
-- [ ] b2b is not accumulating beyond x1 (tested across multiple consecutive quads)
+- [x] b2b is not accumulating beyond x1 (tested across multiple consecutive quads)

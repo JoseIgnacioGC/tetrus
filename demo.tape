@@ -1,11 +1,10 @@
 # Only tested on linux!
 
 # Previous Work
-#   Hide
-#   Type "cargo build --release --features vhs; echo BUILD_FINISHED"
-#   Enter
-#   Wait+Screen@15000ms /BUILD_FINISHED/
-#   Show
+Hide
+Type "cargo build --release --features vhs"
+Enter
+Show
 
 Output assets/demo.gif
 
@@ -28,7 +27,7 @@ Enter
 Sleep 3s
 Show
 
-# Enter a game mode
+# Enter main game mode
 Sleep 2s
 Enter
 Sleep 2s

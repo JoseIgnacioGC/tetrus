@@ -6,12 +6,11 @@ A cross-platform terminal based Tetris game (inspired by [tetr.io](https://tetr.
 
 ![Demo Video](./assets/demo.gif)
 
-## Prerequisites
+## How to Run
+
+### Prerequisites
 
 - [Rust](https://www.rust-lang.org/tools/install)
-- [VHS](https://github.com/charmbracelet/vhs) (optional, for recording demo GIFs)
-
-## How to Run
 
 ```bash
 git clone https://github.com/JoseIgnacioGC/tetrus.git
@@ -21,9 +20,10 @@ cargo run --release
 
 ## Record Demo (VHS)
 
-To render the deterministic demo GIF:
+### Prerequisites
+
+- [VHS](https://github.com/charmbracelet/vhs)
 
 ```bash
-cargo build --release --features vhs
 vhs demo.tape
 ```

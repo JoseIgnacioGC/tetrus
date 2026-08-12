@@ -12,7 +12,7 @@ Set Padding 20
 
 # Previous Work
 Hide
-Type "cargo build --release --features vhs; echo 'Done building'"
+Type "cargo build --release --features vhs"
 Enter
 Wait@20s />$/
 Type "clear"

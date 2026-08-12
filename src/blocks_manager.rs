@@ -8,6 +8,7 @@ pub struct BlocksManager {
     active_bag: u8,
     current_index: u8,
     rng: SmallRng,
+    seed: Option<u64>,
 }
 
 impl BlocksManager {
@@ -24,6 +25,7 @@ impl BlocksManager {
             active_bag: 0,
             current_index: 0,
             rng,
+            seed: None,
         }
     }
 
@@ -41,10 +43,17 @@ impl BlocksManager {
             active_bag: 0,
             current_index: 0,
             rng,
+            seed: Some(seed),
         }
     }
 
     pub fn reset(&mut self) {
+        if let Some(seed) = self.seed {
+            self.rng = SmallRng::seed_from_u64(seed);
+        } else {
+            self.rng = rand::make_rng();
+        }
+
         let mut bag_1: [Block; Block::COUNT] = Block::VARIANTS.try_into().unwrap();
         let mut bag_2: [Block; Block::COUNT] = Block::VARIANTS.try_into().unwrap();
 

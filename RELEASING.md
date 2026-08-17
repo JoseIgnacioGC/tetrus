@@ -2,8 +2,6 @@
 
 Instructions for creating releases, uploading binaries, and publishing packages for **Tetrus**.
 
----
-
 ## The 1-Command Automated Release (Recommended)
 
 Install `cargo-release` (one-time setup):

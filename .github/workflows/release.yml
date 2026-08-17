@@ -93,5 +93,5 @@ jobs:
         uses: vedantmgoyal2009/winget-releaser@v2
         with:
           identifier: JoseIgnacioGC.tetrus
-          token: ${{ secrets.WINGET_TOKEN || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.WINGET_TOKEN }}
 

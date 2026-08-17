@@ -28,6 +28,27 @@ Or build and install from source:
 cargo install tetrus
 ```
 
+## How to Run
+
+Once installed, simply type:
+
+```bash
+tetrus
+```
+
+## Updating
+
+- **Windows (Winget)**:
+  ```powershell
+  winget upgrade JoseIgnacioGC.tetrus
+  ```
+- **Cargo Binstall / Cargo**:
+  ```bash
+  cargo binstall tetrus --force
+  # or
+  cargo install tetrus --force
+  ```
+
 ## Contributing
 
 Contributions are welcome! Please check out [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, running tests, and guidelines on how to contribute.

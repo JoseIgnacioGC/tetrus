@@ -30,3 +30,11 @@ tachyonfx = "0.25.1"
 
 [features]
 vhs = []
+
+[package.metadata.release]
+push = true
+publish = true
+tag-name = "v{{version}}"
+tag-message = "Release v{{version}}"
+pre-release-commit-message = "chore(release): bump version to {{version}}"
+

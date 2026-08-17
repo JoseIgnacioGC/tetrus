@@ -83,3 +83,15 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
+
+  winget-publish:
+    name: Publish to Winget
+    needs: build-and-release
+    runs-on: windows-latest
+    steps:
+      - name: Submit to Windows Package Manager (Winget)
+        uses: vedantmgoyal2009/winget-releaser@v2
+        with:
+          identifier: JoseIgnacioGC.tetrus
+          token: ${{ secrets.WINGET_TOKEN || secrets.GITHUB_TOKEN }}
+

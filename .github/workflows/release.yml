@@ -1,0 +1,85 @@
+name: Release
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    name: Build (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            use-cross: false
+            archive: tar.gz
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            use-cross: true
+            archive: tar.gz
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            use-cross: false
+            archive: zip
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross (if needed)
+        if: matrix.use-cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Build binaries
+        run: |
+          if [ "${{ matrix.use-cross }}" = "true" ]; then
+            cross build --release --target ${{ matrix.target }} --bins
+          else
+            cargo build --release --target ${{ matrix.target }} --bins
+          fi
+        shell: bash
+
+      - name: Package artifacts (Unix)
+        if: matrix.archive == 'tar.gz'
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          ARCHIVE_NAME="tetrus-${TAG_NAME}-${{ matrix.target }}.tar.gz"
+          cd "target/${{ matrix.target }}/release"
+          tar -czf "../../../${ARCHIVE_NAME}" tetrus
+          cd ../../..
+          sha256sum "${ARCHIVE_NAME}" > "${ARCHIVE_NAME}.sha256"
+        shell: bash
+
+      - name: Package artifacts (Windows)
+        if: matrix.archive == 'zip'
+        run: |
+          $TAG_NAME = $env:GITHUB_REF -replace '^refs/tags/', ''
+          $ARCHIVE_NAME = "tetrus-${TAG_NAME}-${{ matrix.target }}.zip"
+          cd "target/${{ matrix.target }}/release"
+          Compress-Archive -Path "tetrus.exe" -DestinationPath "../../../${ARCHIVE_NAME}"
+          cd ../../..
+          (Get-FileHash -Algorithm SHA256 $ARCHIVE_NAME).Hash.ToLower() + "  " + $ARCHIVE_NAME | Out-File -Encoding ascii "${ARCHIVE_NAME}.sha256"
+        shell: pwsh
+
+      - name: Upload artifacts to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            tetrus-*.tar.gz
+            tetrus-*.tar.gz.sha256
+            tetrus-*.zip
+            tetrus-*.zip.sha256
+          draft: false
+          prerelease: false
+          generate_release_notes: true

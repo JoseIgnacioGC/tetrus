@@ -46,7 +46,7 @@
 
 ### Github
 
-- [ ] Publish release binaries for linux and windows.
+- [x] Publish release binaries for linux and windows.
 - [x] Implement a vhs script to record demos.
 
 ### Others

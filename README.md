@@ -6,24 +6,7 @@ A cross-platform terminal based Tetris game (inspired by [tetr.io](https://tetr.
 
 ![Demo Video](./assets/demo.gif)
 
-## How to Run
+## License
 
-### Prerequisites
+This project is licensed under the [MIT License](LICENSE).
 
-- [Rust](https://www.rust-lang.org/tools/install)
-
-```bash
-git clone https://github.com/JoseIgnacioGC/tetrus.git
-cd tetrus
-cargo run --release
-```
-
-## Record Demo (VHS)
-
-### Prerequisites
-
-- [VHS](https://github.com/charmbracelet/vhs)
-
-```bash
-vhs demo.tape
-```

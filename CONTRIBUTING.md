@@ -29,4 +29,3 @@ vhs demo.tape
 1. Record a demo if your feature changes gameplay/UI (`vhs demo.tape` it only works on linux).
 1. Commit your changes following conventional commit messages.
 1. Push your branch and open a Pull Request.
-

@@ -36,13 +36,16 @@ cargo publish
 Use Microsoft's official `wingetcreate` CLI tool:
 
 ### Initial Package Submission
+
 ```powershell
 winget install wingetcreate
 wingetcreate new https://github.com/JoseIgnacioGC/tetrus/releases/download/v0.1.0/tetrus-v0.1.0-x86_64-pc-windows-msvc.zip
 ```
 
 ### Subsequent Version Updates
+
 ```powershell
 wingetcreate update JoseIgnacioGC.tetrus -u https://github.com/JoseIgnacioGC/tetrus/releases/download/v0.2.0/tetrus-v0.2.0-x86_64-pc-windows-msvc.zip -v 0.2.0
 ```
+
 This automatically calculates SHA256 hashes, generates the manifests, and opens the PR against `microsoft/winget-pkgs`.

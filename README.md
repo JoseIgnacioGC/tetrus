@@ -28,7 +28,10 @@ Or build and install from source:
 cargo install tetrus
 ```
 
+## Contributing
+
+Contributions are welcome! Please check out [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, running tests, and guidelines on how to contribute.
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
-

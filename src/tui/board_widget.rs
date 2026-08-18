@@ -32,10 +32,10 @@ impl BoardWidget {
     pub fn new() -> Self {
         let tick_60fps_interval: Duration = Duration::from_secs_f32(1.0 / 60.0);
 
-        #[cfg(any(vhs, feature = "vhs"))]
+        #[cfg(feature = "vhs")]
         let blocks_manager = BlocksManager::with_seed(123456789);
 
-        #[cfg(not(any(vhs, feature = "vhs")))]
+        #[cfg(not(feature = "vhs"))]
         let blocks_manager = BlocksManager::new();
 
         Self {

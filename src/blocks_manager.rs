@@ -29,7 +29,7 @@ impl BlocksManager {
         }
     }
 
-    #[cfg(any(debug_assertions, vhs, feature = "vhs"))]
+    #[cfg(any(debug_assertions, feature = "vhs"))]
     pub fn with_seed(seed: u64) -> Self {
         let mut rng = SmallRng::seed_from_u64(seed);
         let mut bag_1: [Block; Block::COUNT] = Block::VARIANTS.try_into().unwrap();

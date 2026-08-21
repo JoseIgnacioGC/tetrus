@@ -49,6 +49,18 @@ tetrus
   cargo install tetrus --force
   ```
 
+## Uninstalling
+
+- **Windows (Winget)**:
+  ```powershell
+  winget uninstall JoseIgnacioGC.tetrus
+  ```
+- **Cargo / Cargo Binstall**:
+  ```bash
+  cargo uninstall tetrus
+  ```
+
+
 ## Contributing
 
 Contributions are welcome! Please check out [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, running tests, and guidelines on how to contribute.

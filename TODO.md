@@ -46,8 +46,8 @@
 - [x] When you enter a test board you should have the piece that you need to do what the preset is intended to do. (e.g. you should start with the T piece when entering the T-Spin Double Setup).
 - [x] Rename "debug boards" to "learn moves" remove the debug flags.
 - [x] Learn boards should have 0 gravity, or the user should be able to change gravity (option between "Learn Boards\n\n\gravity 1 (if you press <-/-> the counter increase and decrease, min 0, max 20. <- do not go back in this option, this is not the default option, that's the first board in the list\n\n \<first board\> ...)
-- [ ] Learn boards shouldn't have "top scores" or any score system, at all. (extract score logic into a widget, then inyect it just when needed. Improve the gameover state machine to support any game style and debug boards)
-- [ ] Learn boards "again?" option should return to the pre-build board, not a normal board.
+- [x] Learn boards shouldn't have "top scores" or any score system, at all. (extract score logic into a widget, then inyect it just when needed. Improve the gameover state machine to support any game style and debug boards)
+- [x] Learn boards "again?" option should return to the pre-build board, not a normal board.
 
 ### Github
 

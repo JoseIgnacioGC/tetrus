@@ -41,9 +41,20 @@ pub enum GameState {
     GameOver,
 }
 
+#[derive(Clone, Copy)]
+pub enum ActiveGameMode {
+    Endless,
+    LearnMoves {
+        grid: crate::board::Grid,
+        starting_pieces: &'static [crate::blocks::Block],
+        gravity: usize,
+    },
+}
+
 pub struct Game<'a> {
     title: Line<'a>,
     game_state: GameState,
+    active_game_mode: ActiveGameMode,
 
     // TODO: use a state machine to not have every widget in memory at any time
     menu_widget: MenuWidget<'a>,
@@ -73,6 +84,7 @@ impl<'a> Game<'a> {
         Self {
             title: title.clone(),
             game_state: GameState::Menu,
+            active_game_mode: ActiveGameMode::Endless,
 
             menu_widget: MenuWidget::new(title),
             metrics_widget: MetricsWidget::new(),
@@ -93,10 +105,16 @@ impl<'a> Game<'a> {
                     GameState::Menu => match self.menu_widget.handle_key_event(event) {
                         MenuState::Brake => return Ok(true),
                         MenuState::EnterGame => {
+                            self.active_game_mode = ActiveGameMode::Endless;
                             self.game_state = GameState::Game;
                             self.board_widget.new_game();
                         }
                         MenuState::EnterGameWithPreset(grid, pieces, gravity) => {
+                            self.active_game_mode = ActiveGameMode::LearnMoves {
+                                grid,
+                                starting_pieces: pieces,
+                                gravity,
+                            };
                             self.game_state = GameState::Game;
                             self.board_widget
                                 .new_game_with_preset(grid, pieces, gravity);
@@ -111,7 +129,22 @@ impl<'a> Game<'a> {
                         GameoverState::Brake => return Ok(true),
                         GameoverState::EnterGame => {
                             self.game_state = GameState::Game;
-                            self.board_widget.new_game();
+                            match self.active_game_mode {
+                                ActiveGameMode::Endless => {
+                                    self.board_widget.new_game();
+                                }
+                                ActiveGameMode::LearnMoves {
+                                    grid,
+                                    starting_pieces,
+                                    gravity,
+                                } => {
+                                    self.board_widget.new_game_with_preset(
+                                        grid,
+                                        starting_pieces,
+                                        gravity,
+                                    );
+                                }
+                            }
                         }
                         GameoverState::EnterMenu => {
                             self.game_state = GameState::Menu;
@@ -134,11 +167,18 @@ impl<'a> Game<'a> {
                 GameState::Game => {
                     if self.board_widget.update() == BoardState::GameOver {
                         self.game_state = GameState::GameOver;
-                        let score = self.board_widget.board.stats.score;
-                        let lines = self.board_widget.board.stats.cleaned_lines;
-                        let level = self.board_widget.board.stats.level;
-                        self.gameover_widget
-                            .setup_game_over("endless", score, lines, level);
+                        match self.active_game_mode {
+                            ActiveGameMode::Endless => {
+                                let score = self.board_widget.board.stats.score;
+                                let lines = self.board_widget.board.stats.cleaned_lines;
+                                let level = self.board_widget.board.stats.level;
+                                self.gameover_widget
+                                    .setup_endless(score, lines, level);
+                            }
+                            ActiveGameMode::LearnMoves { .. } => {
+                                self.gameover_widget.setup_learn_moves();
+                            }
+                        }
                     }
                 }
                 _ => std::thread::sleep(Duration::from_millis(16)),

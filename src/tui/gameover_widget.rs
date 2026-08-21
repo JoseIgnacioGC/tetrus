@@ -28,12 +28,19 @@ pub enum GameoverStage {
     Menu,
 }
 
+#[derive(PartialEq, Eq)]
+pub enum GameoverMode {
+    Endless,
+    LearnMoves,
+}
+
 pub struct GameoverWidget<'a> {
     option_index: usize,
     menu_options: [Span<'a>; 3],
     stage: GameoverStage,
+    mode: GameoverMode,
     high_scores: HighScores,
-    game_mode: String,
+    game_mode_name: String,
     current_score: usize,
     current_lines: usize,
     current_level: usize,
@@ -48,8 +55,9 @@ impl<'a> GameoverWidget<'a> {
             option_index: 0,
             menu_options: ["again?".into(), "menu".into(), "quit".into()],
             stage: GameoverStage::Menu,
+            mode: GameoverMode::Endless,
             high_scores: HighScores::default(),
-            game_mode: "endless".to_string(),
+            game_mode_name: "endless".to_string(),
             current_score: 0,
             current_lines: 0,
             current_level: 0,
@@ -59,15 +67,16 @@ impl<'a> GameoverWidget<'a> {
         }
     }
 
-    pub fn setup_game_over(&mut self, mode: &str, score: usize, lines: usize, level: usize) {
-        self.game_mode = mode.to_string();
+    pub fn setup_endless(&mut self, score: usize, lines: usize, level: usize) {
+        self.mode = GameoverMode::Endless;
+        self.game_mode_name = "endless".to_string();
         self.current_score = score;
         self.current_lines = lines;
         self.current_level = level;
         self.option_index = 0;
         self.initials = Initials::new();
         self.high_scores = HighScores::load();
-        self.qualified_rank = self.high_scores.check_qualification(mode, score);
+        self.qualified_rank = self.high_scores.check_qualification("endless", score);
 
         if self.qualified_rank.is_some() {
             self.stage = GameoverStage::EnteringInitials;
@@ -76,6 +85,14 @@ impl<'a> GameoverWidget<'a> {
             self.stage = GameoverStage::Menu;
             self.highlighted_rank = None;
         }
+    }
+
+    pub fn setup_learn_moves(&mut self) {
+        self.mode = GameoverMode::LearnMoves;
+        self.option_index = 0;
+        self.stage = GameoverStage::Menu;
+        self.qualified_rank = None;
+        self.highlighted_rank = None;
     }
 
     pub fn handle_key_event(&mut self, event: KeyEvent) -> GameoverState {
@@ -96,7 +113,7 @@ impl<'a> GameoverWidget<'a> {
                         self.initials
                     };
                     let rank = self.high_scores.insert(
-                        &self.game_mode,
+                        &self.game_mode_name,
                         ScoreEntry {
                             initials: final_initials,
                             score: self.current_score,
@@ -150,6 +167,37 @@ impl<'a> GameoverWidget<'a> {
 
 impl<'a> Widget for &mut GameoverWidget<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
+        if self.mode == GameoverMode::LearnMoves {
+            let block_width = 30;
+            let block_height = 9;
+            let block_area =
+                area.centered(constraint!(== block_width), constraint!(== block_height));
+
+            let mut lines = Vec::new();
+            lines.push(Line::from("GAME OVER".bold()).centered());
+            lines.push(Line::raw(""));
+
+            for (i, option) in self.menu_options.iter().enumerate() {
+                if i == self.option_index {
+                    lines.push(Line::from(span!("- {} -", option).green().bold()).centered());
+                } else {
+                    lines.push(Line::from(option.clone()).centered());
+                }
+            }
+
+            let inner_area = block_area
+                .inner(Margin::new(2, 1))
+                .centered_vertically(constraint!(== lines.len() as u16));
+
+            Clear.render(block_area, buf);
+            Block::bordered()
+                .border_style(Color::Rgb(60, 60, 60))
+                .render(block_area, buf);
+
+            Text::from(lines).render(inner_area, buf);
+            return;
+        }
+
         let block_width = 38;
         let block_height = 19;
 
@@ -209,7 +257,7 @@ impl<'a> Widget for &mut GameoverWidget<'a> {
         lines.push(Line::raw(""));
         lines.push(Line::raw(""));
 
-        let top_5 = self.high_scores.get_top_5(&self.game_mode);
+        let top_5 = self.high_scores.get_top_5(&self.game_mode_name);
         for i in 0..5 {
             let rank_idx = i + 1;
             let is_highlighted = self.highlighted_rank == Some(rank_idx);

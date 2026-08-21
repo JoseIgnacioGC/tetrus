@@ -378,6 +378,25 @@ impl Board {
         }
     }
 
+    pub fn move_block_down(&mut self) -> bool {
+        let Some(piece) = self.active_piece else {
+            return false;
+        };
+
+        let (x, y) = piece.coord;
+        let next_pos = (x, y + 1);
+
+        if self.can_place(piece.block, next_pos, piece.rotation) {
+            if let Some(ref mut p) = self.active_piece {
+                p.coord = next_pos;
+                p.last_action_was_rotation = false;
+            }
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn move_block_down_or_set(&mut self) -> bool {
         let Some(piece) = self.active_piece else {
             return false;

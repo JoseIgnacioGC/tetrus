@@ -85,7 +85,11 @@ impl BoardWidget {
                 BoardState::Pass
             }
             KeyCode::Down => {
-                let _ = self.board.move_block_down_or_set();
+                if self.board.stats.level == 0 {
+                    let _ = self.board.move_block_down();
+                } else {
+                    let _ = self.board.move_block_down_or_set();
+                }
                 BoardState::Pass
             }
             KeyCode::Up
@@ -99,7 +103,7 @@ impl BoardWidget {
                 BoardState::Pass
             }
             KeyCode::Char(' ') => {
-                while self.board.move_block_down_or_set() {}
+                while self.board.move_block_down() {}
                 self.board.lock_current_block();
                 self.acc_time = Duration::ZERO;
                 BoardState::Pass
@@ -148,7 +152,9 @@ impl BoardWidget {
             }
         }
 
-        self.board.check_lock_delay();
+        if self.board.stats.level > 0 {
+            self.board.check_lock_delay();
+        }
 
         let elapsed = current_time.elapsed();
         if elapsed < self.tick_interval {

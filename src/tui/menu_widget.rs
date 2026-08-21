@@ -196,6 +196,7 @@ impl<'a> Widget for &mut MenuWidget<'a> {
                     } else {
                         menu_text.push_line(Line::from(text));
                     }
+                    menu_text.push_line(Line::raw(""));
                 } else {
                     let option_idx = i - 1;
                     if option_idx == 7 {

@@ -1,6 +1,6 @@
 [package]
 name = "tetrus"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "A fast, cross-platform terminal-based Tetris game built in Rust with Ratatui."
 repository = "https://github.com/JoseIgnacioGC/tetrus"
@@ -16,7 +16,7 @@ path = "src/main.rs"
 [package.metadata.binstall]
 pkg-url = "{ repo }/releases/download/v{ version }/{ name }-v{ version }-{ target }.{ archive-format }"
 bin-dir = "{ bin }{ binary-ext }"
-pkg-fmt = "tar.gz"
+pkg-fmt = "tgz"
 
 [package.metadata.binstall.overrides.x86_64-pc-windows-msvc]
 pkg-fmt = "zip"

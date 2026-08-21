@@ -55,11 +55,16 @@ impl BoardWidget {
     }
 
     #[cfg(debug_assertions)]
-    pub fn new_game_with_grid(&mut self, grid: crate::board::Grid) {
+    pub fn new_game_with_preset(
+        &mut self,
+        grid: crate::board::Grid,
+        starting_pieces: &[crate::blocks::Block],
+    ) {
         self.board.new_with_grid(grid);
         self.last_tick = Instant::now();
         self.acc_time = Duration::ZERO;
         self.blocks_manager.reset();
+        self.blocks_manager.set_next_blocks_slice(starting_pieces);
     }
 
     pub fn handle_key_event(&mut self, event: KeyEvent) -> BoardState {

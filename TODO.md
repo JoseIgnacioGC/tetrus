@@ -43,6 +43,11 @@
 
 - [x] Implement a way to create pre-defined blocks arrangements.
 - [x] Create pre-defined blocks arrangements to test specific scenarios (improve kicks, all spins, etc).
+- [x] When you enter a test board you should have the piece that you need to do what the preset is intended to do. (e.g. you should start with the T piece when entering the T-Spin Double Setup).
+- [ ] Rename "debug boards" to "learn moves" remove the debug flags.
+- [ ] Learn boards should have 0 gravity, or the user should be able to change gravity (option between "Learn Boards\n\n\gravity 1 (if you press <-/-> the counter increase and decrease, <- do not go back in this option, this is not the default option, that's the first board in the list\n\n \<first board\> ...)
+- [ ] Learn boards shouldn't have "top scores" or any score system, at all. (extract score logic into a widget, then inyect it just when needed. Improve the gameover state machine to support any game style and debug boards)
+- [ ] Learn boards "again?" option should return to the pre-build board, not a normal board.
 
 ### Github
 
@@ -51,7 +56,7 @@
 
 ### UI/UX
 
-- [ ] Display a borders around the entire tui if the terminal is smaller than the min width ( based on COLUMNS \* 2 + gaps) or min height (based on ROWS \* 2 + the title + gaps)
+- [ ] Display a borders around the entire tui if the terminal is smaller than the min width ( based on COLUMNS \* 2 + gaps) or min height (based on ROWS \* 2 + the title + gaps), Display a warning message.
 
 ### Others
 

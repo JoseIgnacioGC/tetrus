@@ -14,7 +14,7 @@ pub enum MenuState {
     Pass,
     EnterGame,
     #[cfg(debug_assertions)]
-    EnterGameWithGrid(crate::board::Grid),
+    EnterGameWithPreset(crate::board::Grid, &'static [crate::blocks::Block]),
     Brake,
 }
 
@@ -113,13 +113,34 @@ impl<'a> MenuWidget<'a> {
                         MenuState::Pass
                     }
                     KeyCode::Enter | KeyCode::Char(' ') => match self.debug_board_index {
-                        0 => MenuState::EnterGameWithGrid(crate::board::presets::t_spin_double()),
-                        1 => MenuState::EnterGameWithGrid(crate::board::presets::t_spin_triple()),
-                        2 => MenuState::EnterGameWithGrid(crate::board::presets::quad_clear()),
-                        3 => MenuState::EnterGameWithGrid(crate::board::presets::l_spin()),
-                        4 => MenuState::EnterGameWithGrid(crate::board::presets::j_spin()),
-                        5 => MenuState::EnterGameWithGrid(crate::board::presets::s_spin()),
-                        6 => MenuState::EnterGameWithGrid(crate::board::presets::z_spin()),
+                        0 => MenuState::EnterGameWithPreset(
+                            crate::board::presets::t_spin_double(),
+                            &[crate::blocks::Block::T],
+                        ),
+                        1 => MenuState::EnterGameWithPreset(
+                            crate::board::presets::t_spin_triple(),
+                            &[crate::blocks::Block::T],
+                        ),
+                        2 => MenuState::EnterGameWithPreset(
+                            crate::board::presets::quad_clear(),
+                            &[crate::blocks::Block::Line],
+                        ),
+                        3 => MenuState::EnterGameWithPreset(
+                            crate::board::presets::l_spin(),
+                            &[crate::blocks::Block::L],
+                        ),
+                        4 => MenuState::EnterGameWithPreset(
+                            crate::board::presets::j_spin(),
+                            &[crate::blocks::Block::J],
+                        ),
+                        5 => MenuState::EnterGameWithPreset(
+                            crate::board::presets::s_spin(),
+                            &[crate::blocks::Block::S],
+                        ),
+                        6 => MenuState::EnterGameWithPreset(
+                            crate::board::presets::z_spin(),
+                            &[crate::blocks::Block::Z],
+                        ),
                         7 => {
                             self.screen = MenuScreen::Main;
                             MenuState::Pass

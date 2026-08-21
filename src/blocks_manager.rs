@@ -65,6 +65,39 @@ impl BlocksManager {
         self.current_index = 0;
     }
 
+    #[cfg(debug_assertions)]
+    pub fn set_next_blocks_slice(&mut self, blocks: &[Block]) {
+        for (i, &block) in blocks.iter().take(Block::COUNT * 2).enumerate() {
+            let total_idx = self.current_index as usize + i;
+            let bag_idx = if total_idx < Block::COUNT {
+                self.active_bag as usize
+            } else {
+                (1 - self.active_bag) as usize
+            };
+            let in_bag_idx = total_idx % Block::COUNT;
+
+            let bag = &mut self.bags[bag_idx];
+            if let Some(pos) = bag[in_bag_idx..].iter().position(|&b| b == block) {
+                bag.swap(in_bag_idx, in_bag_idx + pos);
+            } else {
+                bag[in_bag_idx] = block;
+            }
+        }
+    }
+
+    #[cfg(debug_assertions)]
+    pub fn set_next_blocks<const N: usize>(&mut self, blocks: [Block; N]) {
+        const MAX_BLOCKS: usize = Block::COUNT * 2;
+        const {
+            assert!(
+                N <= MAX_BLOCKS,
+                "Cannot queue more blocks than two full bags"
+            );
+        }
+
+        self.set_next_blocks_slice(&blocks);
+    }
+
     pub fn get_next_block(&mut self) -> Block {
         let block = self.bags[self.active_bag as usize][self.current_index as usize];
         self.current_index += 1;

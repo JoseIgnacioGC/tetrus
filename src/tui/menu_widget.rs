@@ -13,32 +13,24 @@ pub enum MenuState {
     #[default]
     Pass,
     EnterGame,
-    #[cfg(debug_assertions)]
     EnterGameWithPreset(crate::board::Grid, &'static [crate::blocks::Block]),
     Brake,
 }
 
-#[cfg(debug_assertions)]
 #[derive(PartialEq, Eq, Default)]
 pub enum MenuScreen {
     #[default]
     Main,
-    DebugBoards,
+    LearnMoves,
 }
 
 pub struct MenuWidget<'a> {
     title: Line<'a>,
     option_index: usize,
-    #[cfg(debug_assertions)]
     menu_options: [Span<'a>; 3],
-    #[cfg(not(debug_assertions))]
-    menu_options: [Span<'a>; 2],
-    #[cfg(debug_assertions)]
     screen: MenuScreen,
-    #[cfg(debug_assertions)]
-    debug_board_index: usize,
-    #[cfg(debug_assertions)]
-    debug_options: [Span<'a>; 8],
+    learn_moves_index: usize,
+    learn_options: [Span<'a>; 8],
 }
 
 impl<'a> MenuWidget<'a> {
@@ -46,16 +38,10 @@ impl<'a> MenuWidget<'a> {
         Self {
             title,
             option_index: 0,
-            #[cfg(debug_assertions)]
-            menu_options: ["endless".into(), "debug boards".into(), "quit".into()],
-            #[cfg(not(debug_assertions))]
-            menu_options: ["endless".into(), "quit".into()],
-            #[cfg(debug_assertions)]
+            menu_options: ["endless".into(), "learn moves".into(), "quit".into()],
             screen: MenuScreen::Main,
-            #[cfg(debug_assertions)]
-            debug_board_index: 0,
-            #[cfg(debug_assertions)]
-            debug_options: [
+            learn_moves_index: 0,
+            learn_options: [
                 "T-Spin Double Setup".into(),
                 "T-Spin Triple Setup".into(),
                 "Quad Clear Setup".into(),
@@ -68,7 +54,6 @@ impl<'a> MenuWidget<'a> {
         }
     }
 
-    #[cfg(debug_assertions)]
     pub fn handle_key_event(&mut self, event: KeyEvent) -> MenuState {
         match self.screen {
             MenuScreen::Main => {
@@ -85,8 +70,8 @@ impl<'a> MenuWidget<'a> {
                     KeyCode::Enter | KeyCode::Char(' ') => match self.option_index {
                         0 => MenuState::EnterGame,
                         1 => {
-                            self.screen = MenuScreen::DebugBoards;
-                            self.debug_board_index = 0;
+                            self.screen = MenuScreen::LearnMoves;
+                            self.learn_moves_index = 0;
                             MenuState::Pass
                         }
                         2 => MenuState::Brake,
@@ -96,23 +81,23 @@ impl<'a> MenuWidget<'a> {
                     _ => MenuState::Pass,
                 }
             }
-            MenuScreen::DebugBoards => {
-                let options_len = self.debug_options.len();
+            MenuScreen::LearnMoves => {
+                let options_len = self.learn_options.len();
                 match event.code {
                     KeyCode::Up => {
-                        self.debug_board_index =
-                            (self.debug_board_index + options_len - 1) % options_len;
+                        self.learn_moves_index =
+                            (self.learn_moves_index + options_len - 1) % options_len;
                         MenuState::Pass
                     }
                     KeyCode::Down => {
-                        self.debug_board_index = (self.debug_board_index + 1) % options_len;
+                        self.learn_moves_index = (self.learn_moves_index + 1) % options_len;
                         MenuState::Pass
                     }
                     KeyCode::Left | KeyCode::Esc => {
                         self.screen = MenuScreen::Main;
                         MenuState::Pass
                     }
-                    KeyCode::Enter | KeyCode::Char(' ') => match self.debug_board_index {
+                    KeyCode::Enter | KeyCode::Char(' ') => match self.learn_moves_index {
                         0 => MenuState::EnterGameWithPreset(
                             crate::board::presets::t_spin_double(),
                             &[crate::blocks::Block::T],
@@ -152,38 +137,15 @@ impl<'a> MenuWidget<'a> {
             }
         }
     }
-
-    #[cfg(not(debug_assertions))]
-    pub fn handle_key_event(&mut self, event: KeyEvent) -> MenuState {
-        let options_len = self.menu_options.len();
-        match event.code {
-            KeyCode::Up => {
-                self.option_index = (self.option_index + options_len - 1) % options_len;
-                MenuState::Pass
-            }
-            KeyCode::Down => {
-                self.option_index = (self.option_index + 1) % options_len;
-                MenuState::Pass
-            }
-            KeyCode::Enter | KeyCode::Char(' ') => match self.option_index {
-                0 => MenuState::EnterGame,
-                1 => MenuState::Brake,
-                _ => unreachable!(),
-            },
-            KeyCode::Esc => MenuState::Brake,
-            _ => MenuState::Pass,
-        }
-    }
 }
 
 impl<'a> Widget for &mut MenuWidget<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        #[cfg(debug_assertions)]
-        if self.screen == MenuScreen::DebugBoards {
+        if self.screen == MenuScreen::LearnMoves {
             let max_visible = (area.height.saturating_sub(6) as usize).max(4);
-            let total_options = self.debug_options.len();
-            let scroll_offset = if self.debug_board_index >= max_visible {
-                self.debug_board_index - max_visible + 1
+            let total_options = self.learn_options.len();
+            let scroll_offset = if self.learn_moves_index >= max_visible {
+                self.learn_moves_index - max_visible + 1
             } else {
                 0
             };
@@ -191,7 +153,7 @@ impl<'a> Widget for &mut MenuWidget<'a> {
 
             let mut menu_text = Text::from(self.title.clone());
             menu_text.push_line(Line::raw(""));
-            menu_text.push_line(Line::from("DEBUG BOARDS".bold()).centered());
+            menu_text.push_line(Line::from("LEARN MOVES".bold()).centered());
             menu_text.push_line(Line::raw(""));
 
             if scroll_offset > 0 {
@@ -199,7 +161,7 @@ impl<'a> Widget for &mut MenuWidget<'a> {
             }
 
             for i in scroll_offset..end_offset {
-                let is_selected = i == self.debug_board_index;
+                let is_selected = i == self.learn_moves_index;
                 if i == 7 {
                     if is_selected {
                         menu_text.push_line(
@@ -220,7 +182,7 @@ impl<'a> Widget for &mut MenuWidget<'a> {
                         );
                     }
                 } else {
-                    let option = &self.debug_options[i];
+                    let option = &self.learn_options[i];
                     if is_selected {
                         menu_text.push_line(span!("- {} -", option).green().bold());
                     } else {

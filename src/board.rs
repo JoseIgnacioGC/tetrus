@@ -132,7 +132,6 @@ impl Board {
         self.timer.start();
     }
 
-    #[cfg(debug_assertions)]
     pub fn new_with_grid(&mut self, grid: Grid) {
         self.new_game();
         self.board = grid;
@@ -673,7 +672,6 @@ impl Widget for &Board {
     }
 }
 
-#[cfg(debug_assertions)]
 pub fn grid_from_str(s: &str) -> Grid {
     let mut grid: Grid = [[None; COLUMNS as usize]; ROWS as usize];
     let lines: Vec<&str> = s.lines().map(|l| l.trim()).filter(|l| !l.is_empty()).collect();
@@ -705,7 +703,6 @@ pub fn grid_from_str(s: &str) -> Grid {
     grid
 }
 
-#[cfg(debug_assertions)]
 pub mod presets {
     use super::{grid_from_str, Grid};
 

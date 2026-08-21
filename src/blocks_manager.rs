@@ -65,7 +65,6 @@ impl BlocksManager {
         self.current_index = 0;
     }
 
-    #[cfg(debug_assertions)]
     pub fn set_next_blocks_slice(&mut self, blocks: &[Block]) {
         for (i, &block) in blocks.iter().take(Block::COUNT * 2).enumerate() {
             let total_idx = self.current_index as usize + i;
@@ -85,7 +84,6 @@ impl BlocksManager {
         }
     }
 
-    #[cfg(debug_assertions)]
     pub fn set_next_blocks<const N: usize>(&mut self, blocks: [Block; N]) {
         const MAX_BLOCKS: usize = Block::COUNT * 2;
         const {

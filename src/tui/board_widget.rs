@@ -54,7 +54,6 @@ impl BoardWidget {
         self.blocks_manager.reset();
     }
 
-    #[cfg(debug_assertions)]
     pub fn new_game_with_preset(
         &mut self,
         grid: crate::board::Grid,

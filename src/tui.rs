@@ -96,7 +96,6 @@ impl<'a> Game<'a> {
                             self.game_state = GameState::Game;
                             self.board_widget.new_game();
                         }
-                        #[cfg(debug_assertions)]
                         MenuState::EnterGameWithPreset(grid, pieces) => {
                             self.game_state = GameState::Game;
                             self.board_widget.new_game_with_preset(grid, pieces);

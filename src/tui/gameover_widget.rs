@@ -18,6 +18,7 @@ pub enum GameoverState {
     #[default]
     Pass,
     EnterGame,
+    EnterMenu,
     Brake,
 }
 
@@ -29,7 +30,7 @@ pub enum GameoverStage {
 
 pub struct GameoverWidget<'a> {
     option_index: usize,
-    menu_options: [Span<'a>; 2],
+    menu_options: [Span<'a>; 3],
     stage: GameoverStage,
     high_scores: HighScores,
     game_mode: String,
@@ -45,7 +46,7 @@ impl<'a> GameoverWidget<'a> {
     pub fn new() -> Self {
         Self {
             option_index: 0,
-            menu_options: ["again?".into(), "quit".into()],
+            menu_options: ["again?".into(), "menu".into(), "quit".into()],
             stage: GameoverStage::Menu,
             high_scores: HighScores::default(),
             game_mode: "endless".to_string(),
@@ -122,7 +123,8 @@ impl<'a> GameoverWidget<'a> {
                     }
                     KeyCode::Enter | KeyCode::Char(' ') => match self.option_index {
                         0 => GameoverState::EnterGame,
-                        1 => GameoverState::Brake,
+                        1 => GameoverState::EnterMenu,
+                        2 => GameoverState::Brake,
                         _ => unreachable!(),
                     },
                     _ => GameoverState::Pass,
@@ -149,11 +151,7 @@ impl<'a> GameoverWidget<'a> {
 impl<'a> Widget for &mut GameoverWidget<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let block_width = 38;
-        let block_height = if self.stage == GameoverStage::EnteringInitials {
-            19
-        } else {
-            17
-        };
+        let block_height = 19;
 
         let block_area = area.centered(constraint!(== block_width), constraint!(== block_height));
         let mut lines = Vec::new();

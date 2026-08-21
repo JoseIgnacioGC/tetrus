@@ -108,6 +108,9 @@ impl<'a> Game<'a> {
                             self.game_state = GameState::Game;
                             self.board_widget.new_game();
                         }
+                        GameoverState::EnterMenu => {
+                            self.game_state = GameState::Menu;
+                        }
                         GameoverState::Pass => (),
                     },
                 }

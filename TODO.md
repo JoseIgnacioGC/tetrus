@@ -39,10 +39,11 @@
 
 - [x] Refactor Board, too much attributes (use enums, newtypes and typestates. To make that impossible logical states impossible).
 
-### Controls
+### Tets
 
-- [ ] Implement reload current game (game mode) after hold "r" for x seconds (display a message/modal that warn and inform about that you need to hold "r" while you press "r").
-- [ ] Improve "esc" quit behavior, you should be able to quit in any moment if you hold "esc" for x seconds (display a message/modal while holding "esc" to show progress).
+
+- [ ] Implement a way to create pre-defined blocks arrangements.
+- [ ] Create pre-defined blocks arrangements to test specific scenarios (improve kicks, all spins, etc).
 
 ### Github
 
@@ -63,6 +64,10 @@
 - [ ] Implement optional (or default) background color.
 - [ ] Implement local stored score system.
 - [ ] Implement display top 5 best scores in game over modal.
+
+### Effects
+
+- [ ] explosion effect when die fx::explode
 
 # Fix
 

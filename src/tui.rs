@@ -45,6 +45,7 @@ pub struct Game<'a> {
     title: Line<'a>,
     game_state: GameState,
 
+    // TODO: use a state machine to not have every widget in memory at any time
     menu_widget: MenuWidget<'a>,
     metrics_widget: MetricsWidget,
     movement_widget: MovementWidget,

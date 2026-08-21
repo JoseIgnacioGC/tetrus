@@ -29,3 +29,8 @@ vhs demo.tape
 1. Record a demo if your feature changes gameplay/UI (`vhs demo.tape` it only works on linux).
 1. Commit your changes following conventional commit messages.
 1. Push your branch and open a Pull Request.
+
+## AI Coding Assistants
+
+If you are using an AI coding assistant (such as GitHub Copilot, Cursor, Claude, Antigravity, etc.), please refer to [AGENTS.md](AGENTS.md) for project architecture context, domain rules, and development guidelines.
+

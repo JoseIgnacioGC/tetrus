@@ -137,6 +137,13 @@ impl Board {
         self.board = grid;
     }
 
+    pub fn new_with_grid_and_gravity(&mut self, grid: Grid, gravity: usize) {
+        self.new_game();
+        self.board = grid;
+        self.stats.level = gravity;
+        self.update_fall_speed();
+    }
+
     pub fn is_paused(&self) -> bool {
         self.play_state == PlayState::Paused
     }
@@ -563,6 +570,10 @@ impl Board {
     }
 
     fn update_level(&mut self) {
+        if self.stats.level == 0 {
+            return;
+        }
+
         let curr_goal = self.stats.level * GOAL_MULTIPLIER;
         if self.stats.cleaned_lines >= curr_goal {
             self.stats.level += 1;
@@ -570,6 +581,11 @@ impl Board {
     }
 
     fn update_fall_speed(&mut self) {
+        if self.stats.level == 0 {
+            self.stats.fall_speed = Duration::ZERO;
+            return;
+        }
+
         if self.stats.level > MAX_FALL_SPEED_LEVEL {
             return;
         }

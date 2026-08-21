@@ -96,9 +96,10 @@ impl<'a> Game<'a> {
                             self.game_state = GameState::Game;
                             self.board_widget.new_game();
                         }
-                        MenuState::EnterGameWithPreset(grid, pieces) => {
+                        MenuState::EnterGameWithPreset(grid, pieces, gravity) => {
                             self.game_state = GameState::Game;
-                            self.board_widget.new_game_with_preset(grid, pieces);
+                            self.board_widget
+                                .new_game_with_preset(grid, pieces, gravity);
                         }
                         MenuState::Pass => (),
                     },

@@ -58,8 +58,9 @@ impl BoardWidget {
         &mut self,
         grid: crate::board::Grid,
         starting_pieces: &[crate::blocks::Block],
+        gravity: usize,
     ) {
-        self.board.new_with_grid(grid);
+        self.board.new_with_grid_and_gravity(grid, gravity);
         self.last_tick = Instant::now();
         self.acc_time = Duration::ZERO;
         self.blocks_manager.reset();
@@ -140,9 +141,11 @@ impl BoardWidget {
             };
         }
 
-        while self.acc_time >= self.board.stats.fall_speed {
-            self.acc_time -= self.board.stats.fall_speed;
-            let _ = self.board.move_block_down_or_set();
+        if self.board.stats.fall_speed > Duration::ZERO {
+            while self.acc_time >= self.board.stats.fall_speed {
+                self.acc_time -= self.board.stats.fall_speed;
+                let _ = self.board.move_block_down_or_set();
+            }
         }
 
         self.board.check_lock_delay();

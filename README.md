@@ -14,7 +14,7 @@ A cross-platform terminal based Tetris game (inspired by [tetr.io](https://tetr.
 winget install JoseIgnacioGC.tetrus
 ```
 
-### Linux & Cross-Platform (Cargo Binstall / Cargo)
+### Linux, macOS & Windows
 
 Install the pre-compiled binary instantly with [cargo-binstall](https://github.com/cargo-bins/cargo-binstall):
 

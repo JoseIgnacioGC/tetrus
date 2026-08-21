@@ -3,6 +3,7 @@ mod blocks_manager;
 mod board;
 mod colors;
 mod constants;
+mod scores;
 mod tui;
 mod utils;
 

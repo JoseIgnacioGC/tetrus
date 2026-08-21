@@ -26,6 +26,8 @@ pkg-fmt = "zip"
 crossterm = "0.29.0"
 rand = "0.10.2"
 ratatui = "0.30.2"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
 strum = { version = "0.28.0", features = ["derive"] }
 tachyonfx = "0.25.1"
 

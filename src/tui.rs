@@ -126,6 +126,11 @@ impl<'a> Game<'a> {
                 GameState::Game => {
                     if self.board_widget.update() == BoardState::GameOver {
                         self.game_state = GameState::GameOver;
+                        let score = self.board_widget.board.stats.score;
+                        let lines = self.board_widget.board.stats.cleaned_lines;
+                        let level = self.board_widget.board.stats.level;
+                        self.gameover_widget
+                            .setup_game_over("endless", score, lines, level);
                     }
                 }
                 _ => std::thread::sleep(Duration::from_millis(16)),

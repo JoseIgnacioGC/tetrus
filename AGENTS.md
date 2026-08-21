@@ -23,13 +23,16 @@ Tetrus is a cross-platform, terminal-based block puzzle game written in Rust usi
   - `debug_widget.rs`: Optional debug telemetry overlay.
 - `src/constants.rs`: Centralized game balance timings (DAS, ARR, lock delay, notification durations, etc).
 - `src/colors.rs`: Theme color palette and styling constants.
-- `src/utils/`: Common helpers and abstractions (such as key hold duration tracking).
+- `src/scores.rs`: High scores persistence, qualification logic.
+- `src/utils/`: Common helpers and abstractions (such as integer formatting).
 
 ---
 
 ## 2. Critical Domain Rules & Patterns
 
-1. **No Direct Config File Edits for Dependencies**:
+1. **Ratatui Macros Convention**:
+   - Prefer Ratatui's declarative layout and text macros (`vertical!`, `horizontal!`, `constraint!`, `line!`, `span!`, `text!`) over verbose builder patterns for UI layouts and text styling.
+2. **No Direct Config File Edits for Dependencies**:
    - Follow standard Rust practices; always use (`cargo add`) rather than ad-hoc configuration mutations unless modifying release metadata.
 
 ---

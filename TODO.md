@@ -41,7 +41,6 @@
 
 ### Tets
 
-
 - [ ] Implement a way to create pre-defined blocks arrangements.
 - [ ] Create pre-defined blocks arrangements to test specific scenarios (improve kicks, all spins, etc).
 
@@ -61,9 +60,11 @@
 - [x] Implement "delay frames" (Lock Delay).
 - [x] Improve x axis translation feel (DAS/ARR).
 - [x] Implement better score system (T-Spin, Back-to-Back, Perfect Clear).
+- [ ] Add an option to return to menu in game over.
+- [ ] Block "space" key for some time when you die to avoid unintentional fast restart.
 - [ ] Implement optional (or default) background color.
-- [ ] Implement local stored score system.
-- [ ] Implement display top 5 best scores in game over modal.
+- [x] Implement local stored score system.
+- [x] Implement display top 5 best scores in game over modal.
 
 ### Effects
 

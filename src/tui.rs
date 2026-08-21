@@ -96,6 +96,11 @@ impl<'a> Game<'a> {
                             self.game_state = GameState::Game;
                             self.board_widget.new_game();
                         }
+                        #[cfg(debug_assertions)]
+                        MenuState::EnterGameWithGrid(grid) => {
+                            self.game_state = GameState::Game;
+                            self.board_widget.new_game_with_grid(grid);
+                        }
                         MenuState::Pass => (),
                     },
                     GameState::Game => match self.board_widget.handle_key_event(event) {
@@ -156,7 +161,7 @@ impl<'a> Game<'a> {
     }
 
     fn render_menu(&mut self, frame: &mut Frame) {
-        let [_, menu_area, bottom_area] = vertical![*=1, == 4, *=1].areas(frame.area());
+        let [_, menu_area, bottom_area] = vertical![*=1, == ROWS, *=1].areas(frame.area());
         let [_, controls_area, _] = vertical![*=1, == 1, == 2].areas(bottom_area);
 
         frame.render_widget(&mut self.menu_widget, menu_area);

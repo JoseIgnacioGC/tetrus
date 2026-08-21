@@ -39,15 +39,19 @@
 
 - [x] Refactor Board, too much attributes (use enums, newtypes and typestates. To make that impossible logical states impossible).
 
-### Tets
+### Tests
 
-- [ ] Implement a way to create pre-defined blocks arrangements.
-- [ ] Create pre-defined blocks arrangements to test specific scenarios (improve kicks, all spins, etc).
+- [x] Implement a way to create pre-defined blocks arrangements.
+- [x] Create pre-defined blocks arrangements to test specific scenarios (improve kicks, all spins, etc).
 
 ### Github
 
 - [x] Publish release binaries for linux and windows.
 - [x] Implement a vhs script to record demos.
+
+### UI/UX
+
+- [ ] Display a borders around the entire tui if the terminal is smaller than the min width ( based on COLUMNS \* 2 + gaps) or min height (based on ROWS \* 2 + the title + gaps)
 
 ### Others
 

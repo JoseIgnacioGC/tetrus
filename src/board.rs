@@ -132,6 +132,12 @@ impl Board {
         self.timer.start();
     }
 
+    #[cfg(debug_assertions)]
+    pub fn new_with_grid(&mut self, grid: Grid) {
+        self.new_game();
+        self.board = grid;
+    }
+
     pub fn is_paused(&self) -> bool {
         self.play_state == PlayState::Paused
     }
@@ -664,5 +670,100 @@ impl Widget for &Board {
                 }
             }
         }
+    }
+}
+
+#[cfg(debug_assertions)]
+pub fn grid_from_str(s: &str) -> Grid {
+    let mut grid: Grid = [[None; COLUMNS as usize]; ROWS as usize];
+    let lines: Vec<&str> = s.lines().map(|l| l.trim()).filter(|l| !l.is_empty()).collect();
+    let num_lines = lines.len();
+    let start_row = (ROWS as usize).saturating_sub(num_lines);
+
+    for (row_idx, line) in lines.iter().enumerate() {
+        let grid_row = start_row + row_idx;
+        if grid_row >= ROWS as usize {
+            break;
+        }
+        for (col_idx, c) in line.chars().enumerate() {
+            if col_idx >= COLUMNS as usize {
+                break;
+            }
+            grid[grid_row][col_idx] = match c {
+                'X' | '#' => Some(Color::DarkGray),
+                'I' => Some(Color::Cyan),
+                'O' => Some(Color::Yellow),
+                'T' => Some(Color::Magenta),
+                'S' => Some(Color::Green),
+                'Z' => Some(Color::Red),
+                'J' => Some(Color::Blue),
+                'L' => Some(Color::Rgb(255, 127, 0)),
+                _ => None,
+            };
+        }
+    }
+    grid
+}
+
+#[cfg(debug_assertions)]
+pub mod presets {
+    use super::{grid_from_str, Grid};
+
+    pub fn t_spin_double() -> Grid {
+        grid_from_str(
+            "XXXX.X.XXX\n\
+             XXXX...XXX\n\
+             XXXXXXXXXX",
+        )
+    }
+
+    pub fn t_spin_triple() -> Grid {
+        grid_from_str(
+            "XXXX..XXXX\n\
+             XXXX.XXXXX\n\
+             XXXX.XXXXX\n\
+             XXXX..XXXX",
+        )
+    }
+
+    pub fn quad_clear() -> Grid {
+        grid_from_str(
+            "XXXXXXXXX.\n\
+             XXXXXXXXX.\n\
+             XXXXXXXXX.\n\
+             XXXXXXXXX.",
+        )
+    }
+
+    pub fn l_spin() -> Grid {
+        grid_from_str(
+            "XXXX..XXXX\n\
+             XXXX.XXXXX\n\
+             XXXX..XXXX",
+        )
+    }
+
+    pub fn j_spin() -> Grid {
+        grid_from_str(
+            "XXXX..XXXX\n\
+             XXXXX.XXXX\n\
+             XXXX..XXXX",
+        )
+    }
+
+    pub fn s_spin() -> Grid {
+        grid_from_str(
+            "XXXX..XXXX\n\
+             XXX..XXXXX\n\
+             XXXX..XXXX",
+        )
+    }
+
+    pub fn z_spin() -> Grid {
+        grid_from_str(
+            "XXXX..XXXX\n\
+             XXXXX..XXX\n\
+             XXXX..XXXX",
+        )
     }
 }

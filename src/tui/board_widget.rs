@@ -54,6 +54,14 @@ impl BoardWidget {
         self.blocks_manager.reset();
     }
 
+    #[cfg(debug_assertions)]
+    pub fn new_game_with_grid(&mut self, grid: crate::board::Grid) {
+        self.board.new_with_grid(grid);
+        self.last_tick = Instant::now();
+        self.acc_time = Duration::ZERO;
+        self.blocks_manager.reset();
+    }
+
     pub fn handle_key_event(&mut self, event: KeyEvent) -> BoardState {
         if self.board.is_paused() {
             return match event.code {

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::{collections::HashMap, fmt, io};
 #[cfg(not(feature = "vhs"))]
 use std::{env, fs, path::Path, path::PathBuf};
-use std::{collections::HashMap, fmt, io};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Initials {
@@ -149,34 +149,28 @@ impl HighScores {
             "endless".to_string(),
             vec![
                 ScoreEntry {
-                    initials: Initials::from_str("MASTER"),
-                    score: 95_000,
+                    initials: Initials::from_str("CZSMIL"),
+                    score: 4_300,
                     lines: 48,
                     level: 5,
                 },
                 ScoreEntry {
-                    initials: Initials::from_str("ALEX"),
-                    score: 62_400,
+                    initials: Initials::from_str("DOREMY"),
+                    score: 3_120,
                     lines: 32,
                     level: 4,
                 },
                 ScoreEntry {
-                    initials: Initials::from_str("SAM"),
-                    score: 41_200,
+                    initials: Initials::from_str("PROZ"),
+                    score: 1_000,
                     lines: 22,
                     level: 3,
                 },
                 ScoreEntry {
-                    initials: Initials::from_str("LUCAS"),
-                    score: 28_500,
+                    initials: Initials::from_str("GARBO"),
+                    score: 200,
                     lines: 15,
                     level: 2,
-                },
-                ScoreEntry {
-                    initials: Initials::from_str("NOOB"),
-                    score: 12_000,
-                    lines: 8,
-                    level: 1,
                 },
             ],
         );

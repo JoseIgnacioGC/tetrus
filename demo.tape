@@ -14,7 +14,7 @@ Set Padding 20
 Hide
 Type "cargo build --release --features vhs"
 Enter
-Wait@20s />$/
+Wait@500s />$/
 Type "clear"
 Enter
 Sleep 500ms
@@ -186,8 +186,14 @@ Sleep 3s
 Space 10
 Sleep 1s
 
+# Enter Initials
+Type "Dao"
+Sleep 500ms
+Enter
+Sleep 1.5s
+
 # Quit
-Down
+Down 2
 Sleep 500ms
 Enter
 

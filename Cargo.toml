@@ -1,6 +1,6 @@
 [package]
 name = "tetrus"
-version = "0.1.2"
+version = "0.2.0"
 edition = "2021"
 authors = ["Jose Ignacio Leiva Morales"]
 description = "A fast, cross-platform terminal-based Tetris game built in Rust with Ratatui."
